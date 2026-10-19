@@ -73,7 +73,10 @@ function GetPlayerSprintStaminaRemaining() return W.stamina end
 function GetResourceState(r) return (r == 'es_extended') and 'missing' or 'missing' end
 function GetConvarInt(_, d) return d end
 function GetCurrentResourceName() return 'nocturne_hud' end
-function GetVehicleEngineHealth() return 1000.0 end
+function GetVehicleEngineHealth() return W.veh.engine or 1000.0 end
+function GetEntityModel() return 99 end
+function GetModelDimensions() return vector3(-1.0, -2.4, -0.6), vector3(1.0, 2.4, 0.9) end
+function GetOffsetFromEntityInWorldCoords(_, ox, oy, oz) local p = W.ped return vector3(p.x + ox, p.y + oy, p.z + oz) end
 function GetVehicleFuelLevel() return W.veh.fuel or 60.0 end
 function GetVehicleNumberPlateText() return 'ABC123' end
 function GetVehicleLightsState() return true, 0, 0 end
@@ -193,6 +196,21 @@ W.nui = {}
 local ok = exported['Notify']({ title = '~r~Alerte', description = 'Texte ~h~gras', type = 'error' })
 local n = W.nui[#W.nui]
 check('Notify : accepté et nettoyé (~r~, ~h~)', ok == true and n and n.t == 'notify' and n.d.title == 'Alerte' and n.d.text == 'Texte gras')
+
+-- Moteur très abîmé : jauge bornée à 0 (le natif descend jusqu'à -4000)
+W.ped.inVeh = W.veh.id; W.veh.speed = 30; W.veh.engine = -400.0; run(200)
+local dv = lastU()
+check('moteur : santé négative bornée à 0', dv and dv.veh and dv.veh.engine == 0, true)
+W.veh.engine = nil
+
+-- ESX : esx:setAccountMoney met à jour le compte reçu, sans attendre le rafraîchissement suivant
+local h = handlers['esx:setAccountMoney']
+if type(h) == 'table' then h = h[1] end
+pcall(h, { name = 'bank', money = 12345 })
+W.nui = {}; run(1200)
+local slow
+for i = #W.nui, 1, -1 do if W.nui[i].t == 's' then slow = W.nui[i].d break end end
+check('ESX : esx:setAccountMoney(compte) met la banque à jour tout de suite', slow and slow.bank == 12345, true)
 
 -- Arrêt de la ressource : minimap rendue, éjection native rétablie
 W.calls = {}
