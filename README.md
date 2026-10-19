@@ -6,6 +6,10 @@
 3. Désactiver l'ancien HUD (qb-hud, ps-hud, esx_hud…) pour éviter les doublons.
 4. Régler `config.lua` (framework, ressource carburant, slots).
 
+### Objets d'inventaire
+Non applicable : nocturne_hud n'ajoute aucun objet à l'inventaire et n'utilise aucune table SQL (réglages des joueurs
+en KVP). Il n'y a donc pas de dossier `install/` à copier dans ox_inventory.
+
 ## Compatibilité
 - **QBCore** : argent, banque, emploi, faim, soif, stress (événements `hud:client:UpdateNeeds` / `UpdateStress` déjà gérés).
 - **ESX** : argent, banque, emploi, faim/soif via `esx_status`.
