@@ -227,6 +227,55 @@ local slow
 for i = #W.nui, 1, -1 do if W.nui[i].t == 's' then slow = W.nui[i].d break end end
 check('ESX : esx:setAccountMoney(compte) met la banque à jour tout de suite', slow and slow.bank == 12345, true)
 
+-- 1.7.1 : date du jeu lue sur l'horloge GTA quand GlobalState.gameDate est absent (aucune ressource ne la fournit)
+function GetClockYear() return 2026 end
+function GetClockMonth() return 6 end      -- 0 = janvier
+function GetClockDayOfMonth() return 3 end
+W.nui = {}; run(1200)
+local sd
+for i = #W.nui, 1, -1 do if W.nui[i].t == 's' then sd = W.nui[i].d break end end
+check('date du jeu : horloge GTA (3 juillet 2026) sans GlobalState.gameDate',
+  sd and type(sd.gameDate) == 'table' and sd.gameDate.year == 2026 and sd.gameDate.month == 7 and sd.gameDate.day == 3)
+
+-- 1.7.1 : plus de trajet en cours envoyé à la page
+W.ped.inVeh = W.veh.id; W.veh.class = 0; W.veh.speed = 50; run(300)
+local tv = lastU()
+check('trajet en cours retiré : ni trip ni km inventé', tv and tv.veh and tv.veh.trip == nil and tv.veh.km == nil)
+
+-- 1.7.1 : décrochage selon le modèle, train rentré, en chute
+local P = { agl = 100.0, vz = -5.0, gear = 4, max = 70.0 } -- max en m/s (252 km/h) → seuil 88 km/h
+function GetEntityHeightAboveGround() return P.agl end
+function GetEntityVelocity() return vector3(0.0, 0.0, P.vz) end
+function GetLandingGearState() return P.gear end
+function GetVehicleEstimatedMaxSpeed() return P.max end
+local function plane(speed) W.veh.class = 16; W.veh.speed = speed; run(300); local d = lastU(); return d and d.veh end
+check('avion lent (70 km/h), train rentré, en chute : DÉCROCHAGE', plane(70).stall == true)
+check('avion à 120 km/h (au-dessus de 35 % de 252) : pas de décrochage', plane(120).stall == false)
+P.gear = 0
+check('approche train sorti à 70 km/h : pas de décrochage', plane(70).stall == false)
+P.gear, P.vz = 4, 0.0
+check('lent mais en palier (vitesse verticale nulle) : pas de décrochage', plane(70).stall == false)
+P.vz, P.agl = -5.0, 10.0
+check('près du sol (33 ft) : pas de décrochage', plane(70).stall == false)
+W.veh.class = 0
+
+-- 1.7.1 : radio du menu F9 sans station débloquée : pas d'erreur (modulo par 0)
+local menus = {}
+lib.registerContext = function(c) menus[c.id] = c end
+lib.showContext = function() end
+local GRS = GetResourceState
+GetResourceState = function(r) return r == 'ox_lib' and 'started' or 'missing' end
+function GetNumUnlockedRadioStations() return 0 end
+function GetPlayerRadioStationName() return nil end
+W.ped.inVeh = W.veh.id; W.veh.speed = 0
+commands['hud_vehmenu']()
+local radioOpt
+for _, o in ipairs(menus.nh_vehicle and menus.nh_vehicle.options or {}) do if o.icon == 'radio' then radioOpt = o end end
+local okRadio = radioOpt and pcall(radioOpt.onSelect)
+GetResourceState = GRS
+check('menu F9 : station suivante sans station débloquée, sans erreur', okRadio == true)
+run(200)
+
 -- Arrêt de la ressource : minimap rendue, éjection native rétablie
 W.calls = {}
 fire('onResourceStop', 'nocturne_hud')

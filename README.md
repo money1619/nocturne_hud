@@ -26,7 +26,7 @@ Ouvrir `html/index.html` dans un navigateur : données de démo, double-clic pou
 - Mode cinéma sur **F10** par défaut (F7 est pris par esx_billing sur dev2).
 - Export `toggleHud(afficher)` au même contrat que jg-hud : jg-mechanic l'utilise (voir `integration/`).
 - Réglages et profils gardés en **KVP** (stockage FiveM du joueur), repris automatiquement depuis l'ancienne copie du navigateur.
-- Kilométrage : réel avec `vehicle_mileage`, sinon seulement le trajet (`Config.FakeOdometer = true` pour l'ancien compteur déduit de la plaque).
+- Kilométrage : réel avec `vehicle_mileage`, sinon rien n'est affiché (`Config.FakeOdometer = true` pour l'ancien compteur déduit de la plaque). Le trajet en cours n'est plus affiché.
 - Le HUD n'envoie à la page que ce qui a changé (au moins une fois par seconde).
 - Polices Inter et Sora incluses (`html/fonts`, licence OFL) : plus de chargement depuis Google.
 - Sons de ceinture : clic à l'attache, bip au-dessus de 20 km/h sans ceinture (`Config.Seatbelt.sounds`).

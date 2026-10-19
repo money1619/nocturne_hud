@@ -63,7 +63,7 @@ Config.Notifications = {
 Config.Fuel = { warn = 10, showRange = 25 }
 
 -- Compteur kilométrique : réel avec la ressource vehicle_mileage. Sans elle, true affiche un compteur « d'occasion »
--- déduit de la plaque (inventé) ; false n'affiche que le trajet en cours.
+-- déduit de la plaque (inventé) ; false n'affiche rien.
 Config.FakeOdometer = false
 
 Config.HideNative = { 3, 4, 6, 7, 8, 9 } -- argent, nom véhicule, zone, classe, rue

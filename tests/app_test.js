@@ -1,4 +1,4 @@
-// Tests hors jeu de html/app.js (1.7.0) sous Node, avec un faux DOM permissif et un faux AudioContext.
+// Tests hors jeu de html/app.js (1.7.1) sous Node, avec un faux DOM permissif et un faux AudioContext.
 // Couvre : sons de ceinture (WebAudio) et migration des réglages localStorage → KVP (rappel NUI « ready »).
 // Ce n'est PAS un essai dans le navigateur de FiveM (CEF) ni dans GTA.
 // Usage (depuis nocturne_hud/) : node tests/app_test.js
@@ -87,6 +87,7 @@ function load(opts) {
     flush: () => new Promise(r => setImmediate(r)),
     tones, posts, ls, audio: () => FakeAudio.count,
     renderTimer: () => timers.find(t => t.ms === 200),
+    node: id => document.getElementById(id),
   };
 }
 
@@ -128,6 +129,21 @@ const SLOW = (o) => ({ id: 1, players: 1, maxPlayers: 4, cash: 0, bank: 0, job: 
     h.send({ t: 'u', d: { show: true, stats: {}, veh: VEH({ cls: 'moto', speed: 80 }) } });
     h.tick(2000); h.send({ t: 'u', d: { show: true, stats: {}, veh: VEH({ cls: 'moto', speed: 80 }) } });
     check('moto : pas de son de ceinture', h.tones.length === 0);
+  }
+
+  // ---------- 1.7.1 : décrochage décidé par le client Lua, plus de trajet affiché
+  {
+    const h = load({});
+    h.send({ t: 's', d: SLOW({}) });
+    const P = o => VEH({ cls: 'plane', alt: 500, vs: -800, gearDown: false, ...o });
+    h.send({ t: 'u', d: { show: true, stats: {}, veh: P({ speed: 120, stall: false }) } });
+    check('avion lent sans drapeau stall : TRAIN RENTRÉ (plus de seuil fixe à 150 km/h)', h.node('gear').textContent === 'TRAIN RENTRÉ');
+    h.send({ t: 'u', d: { show: true, stats: {}, veh: P({ speed: 70, stall: true }) } });
+    check('drapeau stall du client : DÉCROCHAGE', h.node('gear').textContent === 'DÉCROCHAGE');
+    h.send({ t: 'u', d: { show: true, stats: {}, veh: VEH({ speed: 50, trip: 12.3 }) } });
+    check('trajet en cours jamais affiché', h.node('odo').textContent === '');
+    h.send({ t: 'u', d: { show: true, stats: {}, veh: VEH({ speed: 50, km: 48213 }) } });
+    check('kilométrage réel (vehicle_mileage) toujours affiché', /48\s?213 km/.test(String(h.node('odo').textContent).replace(/\u202f|\u00a0/g, ' ')));
   }
 
   // ---------- migration des réglages

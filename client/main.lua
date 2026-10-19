@@ -450,7 +450,6 @@ local function vehicleData(veh)
     for i = 1, #plate do h = (h * 31 + plate:byte(i)) % 1000003 end
     d.km = 8000 + h % 152000 + trip
   end
-  d.trip = trip
   -- Autonomie : consommation mesurée depuis l'entrée (ou le dernier plein)
   local fuel = d.fuel or 0
   if not fuelRef or fuel > fuelRef + 1.0 then fuelRef, tripRef = fuel, trip end
@@ -465,7 +464,13 @@ local function vehicleData(veh)
     d.alt = GetEntityHeightAboveGround(veh) * 3.281
     local v = GetEntityVelocity(veh)
     d.vs = v.z * 196.85
-    if cls == 'plane' then local st = GetLandingGearState(veh); d.gearDown = (st == 0 or st == 2) end
+    if cls == 'plane' then
+      local st = GetLandingGearState(veh); d.gearDown = (st == 0 or st == 2)
+      -- Décrochage : en vol, train rentré, trop lent pour CE modèle (35 % de sa vitesse max, 80 km/h au moins)
+      -- et en chute ; une approche train sorti ou un avion lent en palier ne déclenche plus l'alerte
+      local stallKmh = math.max(80.0, GetVehicleEstimatedMaxSpeed(veh) * 3.6 * 0.35)
+      d.stall = d.alt > 50 and not d.gearDown and speed < stallKmh and d.vs < -500
+    end
     if cls == 'heli' then d.rpm = GetHeliMainRotorHealth(veh) > 0 and (GetIsVehicleEngineRunning(veh) and 0.9 or 0.3) or 0 end
   end
   return d
@@ -558,7 +563,7 @@ CreateThread(function()
       street = street, zone = GetLabelText(GetNameOfZone(coords.x, coords.y, coords.z)),
       map = minimapAnchor(),
       gameTime = ('%02d:%02d'):format(GetClockHours(), GetClockMinutes()),
-      gameDate = GlobalState.gameDate,
+      gameDate = GlobalState.gameDate or { year = GetClockYear(), month = GetClockMonth() + 1, day = GetClockDayOfMonth() },
       lang = Config.Locale, hour = GetClockHours(),
       beltSounds = not (Config.Seatbelt and Config.Seatbelt.sounds == false),
     }
@@ -671,7 +676,11 @@ openVehicleMenu = function()
     { title = T.m_doors, icon = 'car-side', arrow = true, disabled = not driver, onSelect = needDriver(function() doorsMenu(veh) end) },
     { title = T.m_windows, icon = 'wind', arrow = true, onSelect = function() windowsMenu(veh, driver, ped) end },
     { title = T.m_radio, description = GetPlayerRadioStationName() and GetLabelText(GetPlayerRadioStationName()) or T.m_off, icon = 'radio',
-      onSelect = function() SetVehicleRadioEnabled(veh, true); SetRadioToStationIndex((GetPlayerRadioStationIndex() + 1) % GetNumUnlockedRadioStations()); back() end },
+      onSelect = function()
+        local n = GetNumUnlockedRadioStations()
+        if n > 0 then SetVehicleRadioEnabled(veh, true); SetRadioToStationIndex((GetPlayerRadioStationIndex() + 1) % n) end
+        back()
+      end },
     { title = T.m_radio_off, icon = 'volume-xmark', onSelect = function() SetVehRadioStation(veh, 'OFF'); back() end },
     { title = T.m_seats, icon = 'chair', arrow = true, onSelect = function() seatsMenu(veh, ped) end },
   }

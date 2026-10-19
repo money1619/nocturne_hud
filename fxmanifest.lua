@@ -4,7 +4,7 @@ lua54 'yes'
 
 name 'nocturne_hud'
 description 'HUD joueur Nocturne — statuts, argent, voix, véhicule (voiture, moto, vélo, bateau, hélico, avion)'
-version '1.7.0'
+version '1.7.1'
 
 shared_scripts { '@ox_lib/init.lua', 'config.lua' }
 client_script 'client/main.lua'

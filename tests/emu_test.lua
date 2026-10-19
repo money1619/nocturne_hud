@@ -28,6 +28,7 @@ local values = {
     GetPlayerSprintStaminaRemaining = function() return 100.0 end, GetPlayerUnderwaterTimeRemaining = function() return 10.0 end,
     GetSafeZoneSize = function() return 1.0 end, GetAspectRatio = function() return 16 / 9 end,
     GetClockHours = function() return 12 end, GetClockMinutes = function() return 30 end,
+    GetClockYear = function() return 2026 end, GetClockMonth = function() return 6 end, GetClockDayOfMonth = function() return 3 end,
     GetStreetNameAtCoord = function() return 1, 0 end, GetStreetNameFromHashKey = function() return 'Grove Street' end,
     GetNameOfZone = function() return 'DAVIS' end, GetLabelText = function(s) return s end,
     GetVehicleLightsState = function() return true, 0, 0 end, GetVehicleCurrentGear = function() return 1 end,
