@@ -1,0 +1,26 @@
+--- ox_lib 3.32.3 resource/interface/client/notify.lua (origine)
++++ ox_lib/resource/interface/client/notify.lua (avec nocturne_hud)
+@@ -35,10 +35,19 @@
+     data.sound = nil
+     data.position = data.position or settings.notification_position
+ 
+-    SendNUIMessage({
+-        action = 'notify',
+-        data = data
+-    })
++    -- Ajout serveur (nocturne_hud) : notification au style du HUD quand il tourne, sinon affichage d'ox_lib
++    local handled = false
++    if GetResourceState('nocturne_hud') == 'started' then
++        local ok, res = pcall(function() return exports.nocturne_hud:Notify(data) end)
++        handled = ok and res == true
++    end
++
++    if not handled then
++        SendNUIMessage({
++            action = 'notify',
++            data = data
++        })
++    end
+ 
+     if not sound then return end
+ 

@@ -1,0 +1,17 @@
+--- esx_notify 1.12.4 Notify.lua (origine)
++++ esx_notify/Notify.lua (avec nocturne_hud)
+@@ -24,6 +24,14 @@
+         print(("6 %s"):format(message))
+     end
+ 
++    -- Ajout serveur (nocturne_hud) : notification au style du HUD quand il tourne, sinon affichage d'esx_notify
++    if GetResourceState("nocturne_hud") == "started" then
++        local ok, handled = pcall(function()
++            return exports.nocturne_hud:Notify({ description = message, type = notificatonType, duration = length })
++        end)
++        if ok and handled == true then return end
++    end
++
+     SendNuiMessage(json.encode({
+         type = notificatonType,
+         length = length,

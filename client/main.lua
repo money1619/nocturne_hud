@@ -244,9 +244,12 @@ RegisterKeyMapping('hud_cinema', T.cinema, 'keyboard', Config.Keys.cinema or '')
 exports('Notify', function(data)
   local N = Config.Notifications
   if not (N and N.enabled) or type(data) ~= 'table' then return false end
-  local function clean(s) return type(s) == 'string' and (s:gsub('~%a~', '')) or nil end
+  -- Codes couleur GTA / ESX retirés, y compris sur deux lettres (~br~, ~bl~…)
+  local function clean(s) return type(s) == 'string' and (s:gsub('~%a+~', '')) or nil end
+  local title, text = clean(data.title), clean(data.description)
+  if not (title and title ~= '') and not (text and text ~= '') then return false end -- rien à afficher : affichage d'origine
   SendNUIMessage({ t = 'notify', d = {
-    title = clean(data.title), text = clean(data.description), type = data.type or 'info',
+    title = title, text = text, type = data.type or 'info',
     duration = tonumber(data.duration) or N.duration or 5000,
   } })
   return true
