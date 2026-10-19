@@ -64,7 +64,8 @@ const load = () => {
   } catch (e) { return JSON.parse(JSON.stringify(DEF)); }
 };
 let cfg = load();
-const save = () => { try { localStorage.setItem(KEY, JSON.stringify(cfg)); } catch (e) {} post('cfg', { hideMap: !!cfg.hide.map, mapVeh: cfg.mapMode === 'vehicle' }); };
+// Réglages : copie locale (localStorage) + copie durable en KVP côté client Lua (survit au nettoyage du cache)
+const save = () => { try { localStorage.setItem(KEY, JSON.stringify(cfg)); } catch (e) {} post('cfg', { hideMap: !!cfg.hide.map, mapVeh: cfg.mapMode === 'vehicle', full: cfg }); };
 
 function applyColors() {
   const c = cfg.colors, r = document.documentElement.style;
@@ -252,10 +253,29 @@ function renderVehicle(now, sc) {
   $('fuelBox').classList.toggle('pulse', motor && v.fuel < (v.fuelWarn || 10));
   $('range').textContent = motor && v.range && v.fuel < (v.fuelRange || 25) ? '≈ ' + Math.round(v.range * f).toLocaleString(LOC) + u2 : '';
   $('fuel').style.width = Math.max(0, Math.min(100, v.fuel)) + '%'; $('fuel').style.background = fc; $('fuelIc').style.stroke = fc;
+  beltSounds(v, now);
   const b = $('beltIc'); b.style.display = v.cls === 'car' ? '' : 'none';
   b.style.stroke = v.belt ? 'var(--ok)' : DANGER; b.style.opacity = v.belt ? 0.55 : (v.speed > 5 && Math.floor(now / 600) % 2 ? 0.35 : 1);
   const l = $('lightIc'); l.style.display = motor ? '' : 'none'; l.style.stroke = v.lights === 2 ? '#7f9ad9' : 'var(--ok)'; l.style.opacity = v.lights ? 1 : 0.3;
   const e = $('engIc'); e.style.display = motor ? '' : 'none'; e.style.stroke = v.engine < 40 ? DANGER : v.engine < 70 ? '#d6a35e' : 'rgba(233,233,237,.45)';
+}
+
+// ---------- sons de ceinture (générés par la page : aucun fichier son) — Config.Seatbelt.sounds
+let audio = null, prevBelt = null, lastBeep = 0;
+function tone(freq, ms, vol) {
+  try {
+    audio = audio || new AudioContext();
+    const o = audio.createOscillator(), g = audio.createGain();
+    o.frequency.value = freq; g.gain.value = vol;
+    o.connect(g); g.connect(audio.destination);
+    o.start(); g.gain.exponentialRampToValueAtTime(0.0001, audio.currentTime + ms / 1000); o.stop(audio.currentTime + ms / 1000);
+  } catch (e) {}
+}
+function beltSounds(v, now) {
+  if (!D || D.beltSounds === false || edit || !D.veh || v.cls !== 'car') { prevBelt = null; return; }
+  if (prevBelt !== null && v.belt !== prevBelt) tone(v.belt ? 1800 : 1100, 60, 0.05);   // clic
+  prevBelt = v.belt;
+  if (!v.belt && v.speed > 20 && now - lastBeep > 1500) { lastBeep = now; tone(880, 180, 0.04); } // alerte
 }
 
 // ---------- données du jeu
@@ -368,7 +388,7 @@ pbody.addEventListener('click', e => {
   const pl = e.target.closest('[data-pload]');
   if (pl) { try { localStorage.setItem(KEY, localStorage.getItem(profKey(pl.dataset.pload))); } catch (er) {} cfg = load(); buildStats(); applyColors(); save(); renderPanel(); render(); return; }
   const ps = e.target.closest('[data-psave]');
-  if (ps) { try { localStorage.setItem(profKey(ps.dataset.psave), JSON.stringify(cfg)); } catch (er) {} notify({ title: tr('Profil enregistré'), text: tr(PROF[ps.dataset.psave]), type: 'success', duration: 2000 }); renderPanel(); return; }
+  if (ps) { try { localStorage.setItem(profKey(ps.dataset.psave), JSON.stringify(cfg)); } catch (er) {} post('prof', { i: +ps.dataset.psave, cfg }); notify({ title: tr('Profil enregistré'), text: tr(PROF[ps.dataset.psave]), type: 'success', duration: 2000 }); renderPanel(); return; }
   const cb = e.target.closest('[data-col]'); if (cb) { setColor(ctgt, cb.dataset.col); save(); renderPanel(); return; }
   if (e.target.id === 'cReset') { setColor(ctgt, null); save(); renderPanel(); return; }
   if (e.target.id === 'cResetAll') { cfg.colors = {}; applyColors(); render(); save(); renderPanel(); return; }
@@ -399,7 +419,15 @@ $('mini').onclick = () => { const m = panel.classList.toggle('min'); $('mini').t
 $('resetPos').onclick = () => { cfg.pos = {}; cfg.spos = {}; save(); render(); };
 $('closeBtn').onclick = () => setEdit(false);
 applyColors();
-save();
+// Au démarrage : le KVP fait foi s'il existe ; sinon la copie locale y est recopiée (migration depuis 1.6)
+const ready = IN_GAME ? post('ready') : null;
+if (ready) ready.then(r => r && r.json()).then(d => {
+  if (d && Array.isArray(d.profiles)) d.profiles.forEach((p, i) => { if (p) try { localStorage.setItem(profKey(i), JSON.stringify(p)); } catch (e) {} });
+  if (d && d.cfg) { try { localStorage.setItem(KEY, JSON.stringify(d.cfg)); } catch (e) {} cfg = load(); buildStats(); applyColors(); render(); }
+  save();
+}).catch(() => save()); else save();
+// Rendu régulier : clignotants et heure vivent même quand le client n'envoie rien de nouveau
+setInterval(() => { if (D) render(); }, 200);
 
 // ---------- démo navigateur (hors FiveM) : double-clic = réglages
 if (!IN_GAME) {

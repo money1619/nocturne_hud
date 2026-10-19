@@ -7,6 +7,8 @@ d'origine prend alors le relais.
 
 - `ox_lib_notify.patch` : `resource/interface/client/notify.lua` d'ox_lib 3.32.3.
 - `esx_notify_Notify.patch` : `Notify.lua` d'esx_notify 1.12.4.
+- `jg-mechanic_cl-functions.patch` : `framework/cl-functions.lua` de jg-mechanic v1.6.6 (`ToggleHud` appelle
+  `exports.nocturne_hud:toggleHud` quand jg-hud n'est pas démarré : le HUD se cache pendant l'interface du mécanicien).
 
 Originaux : `~/backups/dev2_notify_hook_20261018_211337/` (sha256.txt). Une mise à jour d'ox_lib ou d'esx_notify
 efface ces ajouts : réappliquer les correctifs (`patch -p0` n'est pas adapté aux libellés ; copier le bloc à la main).

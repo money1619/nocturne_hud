@@ -44,6 +44,9 @@ local values = {
 local zero = { 'IsPauseMenuActive', 'IsScreenFadedOut', 'IsHudHidden', 'IsPedSprinting', 'IsPedRunning',
     'IsPedSwimmingUnderWater', 'IsPedArmed', 'NetworkIsPlayerTalking', 'HasEntityCollidedWithAnything',
     'GetIsVehicleEngineRunning', 'GetAmmoInClip', 'GetAmmoInPedWeapon', 'GetHeliMainRotorHealth', 'GetLandingGearState' }
+local kvp = {}
+emu:native('SetResourceKvp', function(k, v) kvp[k] = v end, 'client')
+emu:native('GetResourceKvpString', function(k) return kvp[k] end, 'client')
 local recorded = { 'DisplayRadar', 'SetPedConfigFlag', 'HideHudComponentThisFrame', 'SetMinimapComponentPosition',
     'SetRadarBigmapEnabled', 'BeginScaleformMovieMethod', 'ScaleformMovieMethodAddParamInt', 'EndScaleformMovieMethod',
     'RegisterKeyMapping', 'SetVehicleMaxSpeed', 'SetControlNormal', 'SetEntityVelocity', 'SetPedToRagdoll',
@@ -74,10 +77,12 @@ end
 local function lastSlow() local s = nui('s') return s[#s] and s[#s].msg.d end
 
 T:eq(#emu.errors, 0, 'démarrage : aucune erreur Lua (serveur et client) en 5 s')
-T:check(#nui('u') >= 15, 'mises à jour du HUD envoyées à pied (≈ 4 par seconde)')
+T:check(#nui('u') >= 4 and #nui('u') <= 10, 'à pied, rien ne change : environ une mise à jour par seconde (et non 4), obtenu ' .. #nui('u'))
 T:eq(global.nh_maxPlayers ~= nil, true, 'serveur : nombre de places publié (GlobalState)')
 local s = lastSlow()
 T:check(s and s.cash == 250 and s.bank == 4000, 'argent ESX affiché : 250 $ liquide, 4 000 $ banque')
+T:check(count('RegisterKeyMapping', function(a) return a[1] == 'hud_cinema' and a[4] == 'F10' end) == 1,
+    'mode cinéma sur F10 (F7 est pris par esx_billing sur dev2)')
 T:eq(count('RegisterKeyMapping'), 9, '9 touches enregistrées (ceinture, clignotants, warnings, limiteur, régulateur, ancre, cinéma, menu)')
 
 -- Argent : l'événement esx:setAccountMoney (compte reçu) met le HUD à jour sans attendre la boucle de 2 s
@@ -101,6 +106,27 @@ local lastRadar
 for _, c in ipairs(calls) do if c.name == 'DisplayRadar' then lastRadar = c.args[1] end end
 T:eq(lastRadar, true, 'F7 de nouveau : minimap rendue')
 
+-- Réglages durables (KVP) : enregistrés par le rappel 'cfg', relus par 'ready'
+alice:nuiCallback('cfg', { hideMap = false, mapVeh = false, full = { style = 'bars', unit = 'mph' } })
+emu:run(50)
+local got
+alice:nuiCallback('ready', {}, function(r) got = r end)
+emu:run(50)
+T:check(got and got.cfg and got.cfg.style == 'bars' and got.cfg.unit == 'mph', 'réglages relus depuis le KVP au démarrage de la page')
+
+-- toggleHud (contrat jg-hud, utilisé par jg-mechanic) : HUD et minimap cachés puis rendus
+local hudEnv = emu:env(alice, 'nocturne_hud')
+hudEnv.exports.nocturne_hud:toggleHud(false)
+emu:run(400)
+local uu = nui('u'); uu = uu[#uu].msg.d
+local lr; for _, c in ipairs(calls) do if c.name == 'DisplayRadar' then lr = c.args[1] end end
+T:check(uu.show == false and lr == false, 'toggleHud(false) : HUD masqué et minimap cachée')
+hudEnv.exports.nocturne_hud:toggleHud(true)
+emu:run(400)
+uu = nui('u'); uu = uu[#uu].msg.d
+for _, c in ipairs(calls) do if c.name == 'DisplayRadar' then lr = c.args[1] end end
+T:check(uu.show == true and lr == true, 'toggleHud(true) : HUD et minimap rendus')
+
 -- Réglages : /hudsetting donne la souris à la page, le bouton Fermer la rend
 alice:clientCommand('hudsetting')
 emu:run(100)
@@ -118,6 +144,7 @@ alice:clientCommand('hud_seatbelt')
 emu:run(200)
 local u = nui('u'); u = u[#u].msg.d
 T:eq(u.veh and u.veh.belt, true, 'ceinture attachée affichée au compteur')
+T:eq(u.veh and u.veh.km, nil, 'sans vehicle_mileage : pas de kilométrage inventé (Config.FakeOdometer = false)')
 -- Choc à 110 km/h ceinture attachée : pas d'éjection, dégâts réduits
 veh.speed = 110 / 3.6; emu:run(200); veh.speed = 30 / 3.6; emu:run(200)
 T:eq(count('SetPedToRagdoll'), 0, 'choc ceinture attachée : pas d\'éjection')

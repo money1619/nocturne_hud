@@ -1,0 +1,14 @@
+--- jg-mechanic framework/cl-functions.lua (origine)
++++ jg-mechanic framework/cl-functions.lua (avec nocturne_hud)
+@@ -85,6 +85,11 @@
+     exports["jg-hud"]:toggleHud(toggle)
+     return
+   end
++  -- Ajout serveur (nocturne_hud) : même contrat que jg-hud, le HUD et la minimap sont cachés puis rendus
++  if GetResourceState("nocturne_hud") == "started" then
++    exports["nocturne_hud"]:toggleHud(toggle)
++    return
++  end
+ 
+   DisplayHud(toggle)
+   DisplayRadar(toggle)

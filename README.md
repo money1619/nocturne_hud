@@ -22,6 +22,15 @@
 ## Test hors jeu
 Ouvrir `html/index.html` dans un navigateur : données de démo, double-clic pour les réglages.
 
+## Nouveautés 1.7
+- Mode cinéma sur **F10** par défaut (F7 est pris par esx_billing sur dev2).
+- Export `toggleHud(afficher)` au même contrat que jg-hud : jg-mechanic l'utilise (voir `integration/`).
+- Réglages et profils gardés en **KVP** (stockage FiveM du joueur), repris automatiquement depuis l'ancienne copie du navigateur.
+- Kilométrage : réel avec `vehicle_mileage`, sinon seulement le trajet (`Config.FakeOdometer = true` pour l'ancien compteur déduit de la plaque).
+- Le HUD n'envoie à la page que ce qui a changé (au moins une fois par seconde).
+- Polices Inter et Sora incluses (`html/fonts`, licence OFL) : plus de chargement depuis Google.
+- Sons de ceinture : clic à l'attache, bip au-dessus de 20 km/h sans ceinture (`Config.Seatbelt.sounds`).
+
 ## Notes
 - La minimap native reste à sa place : elle se masque depuis /hudsetting mais ne se déplace pas.
 - Langue : `Config.Locale = 'fr'` ou `'en'`.
@@ -33,6 +42,8 @@ Ouvrir `html/index.html` dans un navigateur : données de démo, double-clic pou
 | `exports.nocturne_hud:SetMoney(liquide, banque)` | Argent affiché (standalone ou économie custom) |
 | `exports.nocturne_hud:SetJob(libellé)` | Emploi affiché |
 | `exports.nocturne_hud:IsSeatbeltOn()` | `true` si la ceinture est attachée |
+| `exports.nocturne_hud:toggleHud(afficher)` | `false` cache HUD et minimap, `true` les rend (contrat jg-hud) |
+| `exports.nocturne_hud:Notify(data)` | Notification au style du HUD (`title`, `description`, `type`, `duration`) ; `false` si rien à afficher |
 
 Exemple : `exports.nocturne_hud:SetNeeds(80, 65, nil)`
 

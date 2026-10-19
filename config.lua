@@ -30,7 +30,7 @@ Config.Keys = {
   limiter = 'L',
   cruise = 'J',
   anchor = '',          -- ancre du bateau (vide = pas de touche par défaut, commande /ancre)
-  cinema = 'F7',        -- mode cinématique : cache tout le HUD + bandes noires
+  cinema = 'F10',       -- mode cinématique : cache tout le HUD + bandes noires (F7 est pris par esx_billing sur dev2)
   vehicleMenu = 'F9',   -- menu véhicule : moteur, phares, portes, fenêtres, radio, sièges
 }
 
@@ -41,6 +41,7 @@ Config.Seatbelt = {
   ejectDrop = 45,       -- perte de vitesse brutale (km/h en un instant) qui compte comme un choc
   ejectDamage = 40,     -- points de vie perdus à l'éjection
   beltDamage = 5,       -- choc encaissé avec la ceinture
+  sounds = true,        -- clic à l'attache, bip au-dessus de 20 km/h sans ceinture (voitures)
 }
 
 -- Masquer les éléments natifs GTA remplacés par le HUD
@@ -60,5 +61,9 @@ Config.Notifications = {
 
 -- Carburant : bip et pulsation sous ce seuil (%), autonomie estimée affichée sous showRange (%)
 Config.Fuel = { warn = 10, showRange = 25 }
+
+-- Compteur kilométrique : réel avec la ressource vehicle_mileage. Sans elle, true affiche un compteur « d'occasion »
+-- déduit de la plaque (inventé) ; false n'affiche que le trajet en cours.
+Config.FakeOdometer = false
 
 Config.HideNative = { 3, 4, 6, 7, 8, 9 } -- argent, nom véhicule, zone, classe, rue

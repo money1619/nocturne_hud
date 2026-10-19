@@ -31,6 +31,8 @@ local blinkHead, blinkTurned = 0.0, false   -- clignotant : cap de départ, vira
 local fuelRef, tripRef, fuelWarned = nil, 0.0, false
 local cinema = false
 local lastRadar = nil -- dernier état de minimap appliqué par le HUD
+local externalHidden = false -- HUD caché par une autre ressource (exports.nocturne_hud:toggleHud(false))
+local lastFast, lastFastAt = '', 0 -- dernière mise à jour envoyée à la page (et quand)
 local belt, blink, cruise, cruiseSpd, anchor = false, 0, nil, 0, false -- blink: 0 off, 1 gauche, 2 droite, 3 warnings
 local lastVeh = 0
 
@@ -124,6 +126,8 @@ AddEventHandler('onResourceStop', function(res)
   if res == 'AEOM_DRUG_SYSTEM' then drugs.toxicity, drugs.addiction, drugs.alcohol = 0, 0, 0 end
 end)
 exports('IsSeatbeltOn', function() return belt end)
+-- Même contrat que jg-hud (utilisé par jg-mechanic) : toggleHud(true) affiche, toggleHud(false) cache HUD et minimap
+exports('toggleHud', function(show) externalHidden = show == false end)
 
 ---------------------------------------------------------------- helpers
 -- position réelle de la minimap native (fractions de l'écran)
@@ -268,9 +272,31 @@ RegisterNUICallback('close', function(_, cb)
   cb('ok')
 end)
 
+-- Réglages du joueur gardés en KVP (stockage FiveM du PC du joueur, qui survit au nettoyage du cache de la page)
+local KVP_CFG, KVP_PROF = 'nocturne_cfg', 'nocturne_prof'
+local function kvpRead(key)
+  local s = GetResourceKvpString(key)
+  if not s or s == '' then return nil end
+  local ok, v = pcall(json.decode, s)
+  return ok and type(v) == 'table' and v or nil
+end
+
+RegisterNUICallback('ready', function(_, cb)
+  local profiles = {}
+  for i = 0, 2 do profiles[i + 1] = kvpRead(KVP_PROF .. i) or false end
+  cb({ cfg = kvpRead(KVP_CFG) or false, profiles = profiles })
+end)
+
 RegisterNUICallback('cfg', function(d, cb)
   hideMap = d and d.hideMap == true
   mapVeh = d and d.mapVeh == true
+  if d and type(d.full) == 'table' then SetResourceKvp(KVP_CFG, json.encode(d.full)) end
+  cb('ok')
+end)
+
+RegisterNUICallback('prof', function(d, cb)
+  local i = d and tonumber(d.i)
+  if i and i >= 0 and i <= 2 and type(d.cfg) == 'table' then SetResourceKvp(KVP_PROF .. i, json.encode(d.cfg)) end
   cb('ok')
 end)
 
@@ -417,7 +443,9 @@ local function vehicleData(veh)
     local ok, km = pcall(function() return exports.vehicle_mileage:GetMileageKm(veh) end)
     if ok and km then d.km = km end
   end
-  if not d.km and cls ~= 'bike' then
+  -- Sans vehicle_mileage : compteur « d'occasion » déduit de la plaque seulement si Config.FakeOdometer
+  -- (sinon le HUD n'affiche que le trajet, au lieu d'un kilométrage inventé présenté comme réel)
+  if not d.km and cls ~= 'bike' and Config.FakeOdometer then
     local plate, h = GetVehicleNumberPlateText(veh) or '', 0
     for i = 1, #plate do h = (h * 31 + plate:byte(i)) % 1000003 end
     d.km = 8000 + h % 152000 + trip
@@ -491,17 +519,23 @@ CreateThread(function()
 
     -- Minimap : seulement quand l'état voulu par le HUD change, pour laisser les autres ressources la cacher
     -- (mode /cinema du serveur, menus, intérieurs…) au lieu de la réafficher à chaque mise à jour
-    local radar = not cinema and not hideMap and (not (Config.MinimapOnlyInVehicle or mapVeh) or veh ~= 0)
+    local radar = not cinema and not externalHidden and not hideMap and (not (Config.MinimapOnlyInVehicle or mapVeh) or veh ~= 0)
     if radar ~= lastRadar then DisplayRadar(radar); lastRadar = radar end
 
-    SendNUIMessage({ t = 'u', d = {
-      show = not cinema and not IsPauseMenuActive() and not IsScreenFadedOut() and not IsHudHidden(),
+    -- Envoi à la page seulement si quelque chose a changé (au moins une fois par seconde pour l'heure et le clignotement)
+    local payload = {
+      show = not cinema and not externalHidden and not IsPauseMenuActive() and not IsScreenFadedOut() and not IsHudHidden(),
       stats = st, underwater = under,
       sprint = IsPedSprinting(ped),
-      heading = (360 - GetEntityHeading(ped)) % 360,
+      heading = math.floor((360 - GetEntityHeading(ped)) % 360 + 0.5),
       weapon = weapon, voice = voice,
       veh = veh ~= 0 and vehicleData(veh) or nil,
-    }})
+    }
+    local enc, now = json.encode(payload), GetGameTimer()
+    if enc ~= lastFast or now - lastFastAt > 1000 then
+      lastFast, lastFastAt = enc, now
+      SendNUIMessage({ t = 'u', d = payload })
+    end
     Wait(veh ~= 0 and Config.TickInVehicle or Config.TickOnFoot)
   end
 end)
@@ -526,6 +560,7 @@ CreateThread(function()
       gameTime = ('%02d:%02d'):format(GetClockHours(), GetClockMinutes()),
       gameDate = GlobalState.gameDate,
       lang = Config.Locale, hour = GetClockHours(),
+      beltSounds = not (Config.Seatbelt and Config.Seatbelt.sounds == false),
     }
     local enc = json.encode(d)
     if enc ~= lastSlow then lastSlow = enc; SendNUIMessage({ t = 's', d = d }) end
