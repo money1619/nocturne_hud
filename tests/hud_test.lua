@@ -197,6 +197,21 @@ local ok = exported['Notify']({ title = '~r~Alerte', description = 'Texte ~h~gra
 local n = W.nui[#W.nui]
 check('Notify : accepté et nettoyé (~r~, ~h~)', ok == true and n and n.t == 'notify' and n.d.title == 'Alerte' and n.d.text == 'Texte gras')
 
+-- Notify : tous les codes de couleur GTA retirés (~br~, ~s~…) ; message vide → false (affichage d'origine)
+W.nui = {}
+local okBr = exported['Notify']({ description = 'Tu as reçu ~br~ 1x balle~s~ !', type = 'success' })
+local nb = W.nui[#W.nui]
+check('Notify : ~br~ et ~s~ retirés', okBr == true and nb and nb.d.text == 'Tu as reçu  1x balle !')
+W.nui = {}
+check('Notify : message vide refusé (false, rien envoyé à l\'UI)', exported['Notify']({ type = 'info' }) == false and #W.nui == 0)
+check('Notify : message non texte refusé', exported['Notify']({ description = 42 }) == false)
+
+-- F7 : mode cinéma du HUD, minimap cachée puis rendue
+W.radar = {}; commands['hud_cinema'](); run(400)
+local hidden = W.radar[#W.radar] == false
+commands['hud_cinema'](); run(400)
+check('F7 cinéma : minimap cachée puis réaffichée', hidden and W.radar[#W.radar] == true)
+
 -- Moteur très abîmé : jauge bornée à 0 (le natif descend jusqu'à -4000)
 W.ped.inVeh = W.veh.id; W.veh.speed = 30; W.veh.engine = -400.0; run(200)
 local dv = lastU()
