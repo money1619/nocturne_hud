@@ -1,4 +1,4 @@
-local T = ({
+local LOCALES = {
   fr = { seatbelt = 'HUD · Ceinture', left = 'HUD · Clignotant gauche', right = 'HUD · Clignotant droit', hazard = 'HUD · Warnings',
          limiter = 'HUD · Limiteur de vitesse', cruise = 'HUD · Régulateur de vitesse', anchor = 'HUD · Ancre (bateau)', cinema = 'HUD · Mode cinématique', vmenu = 'HUD · Menu véhicule',
          m_title = 'Véhicule', m_engine = 'Moteur', m_lights = 'Phares', m_doors = 'Portes', m_windows = 'Fenêtres', m_seats = 'Changer de siège',
@@ -15,7 +15,8 @@ local T = ({
          m_free = 'Free', m_taken = 'Taken', m_driver = 'Driver', m_passenger = 'Passenger', m_back = 'Rear', m_slow = 'Stop first',
          m_only_driver = 'Driver only', m_lights_auto = 'Auto', m_lights_on = 'On', m_lights_off = 'Off',
          doors = { 'Front left', 'Front right', 'Rear left', 'Rear right', 'Hood', 'Trunk' } },
-})[Config.Locale] or {}
+}
+local T = LOCALES[Config.Locale] or LOCALES.fr -- langue inconnue : français (sinon touches et menus sans texte)
 local QB, ESX
 local needs = { hunger = 100, thirst = 100, stress = 0 }
 local drugs = { toxicity = 0, addiction = 0, alcohol = 0 } -- AEOM_DRUG_SYSTEM (0-100)
@@ -28,7 +29,8 @@ local editing = false
 local trip, tripPos = 0.0, nil
 local blinkHead, blinkTurned = 0.0, false   -- clignotant : cap de départ, virage effectué
 local fuelRef, tripRef, fuelWarned = nil, 0.0, false
-local cinema = false -- km parcourus depuis l'entrée dans le véhicule
+local cinema = false
+local lastRadar = nil -- dernier état de minimap appliqué par le HUD
 local belt, blink, cruise, cruiseSpd, anchor = false, 0, nil, 0, false -- blink: 0 off, 1 gauche, 2 droite, 3 warnings
 local lastVeh = 0
 
@@ -82,7 +84,11 @@ end)
 RegisterNetEvent('QBCore:Player:SetPlayerData', function() if QB then refreshQB() end end)
 RegisterNetEvent('hud:client:UpdateNeeds', function(h, t) needs.hunger, needs.thirst = h or needs.hunger, t or needs.thirst end)
 RegisterNetEvent('hud:client:UpdateStress', function(s) needs.stress = s or needs.stress end)
-RegisterNetEvent('esx:setAccountMoney', function() if ESX then refreshESX() end end)
+-- Le compte reçu fait foi : ESX.GetPlayerData() peut ne pas être encore à jour quand ce gestionnaire passe
+RegisterNetEvent('esx:setAccountMoney', function(account)
+  if type(account) ~= 'table' then return end
+  if account.name == 'money' then money.cash = account.money elseif account.name == 'bank' then money.bank = account.money end
+end)
 RegisterNetEvent('esx:setJob', function() if ESX then refreshESX() end end)
 RegisterNetEvent('esx:playerLoaded', function() if ESX then refreshESX() end end)
 AddEventHandler('esx_status:onTick', function(st)
@@ -154,6 +160,13 @@ local function myVeh()
   return veh, false
 end
 
+-- Éjection par le pare-brise (option 32 du ped) : quand la ceinture du HUD est active, c'est crashCheck qui
+-- éjecte ; l'éjection native est alors coupée en véhicule pour ne pas éjecter deux fois.
+local function applyWindscreenFlag()
+  local scripted = Config.Seatbelt and Config.Seatbelt.enabled
+  SetPedConfigFlag(PlayerPedId(), 32, not scripted and not belt)
+end
+
 local function resetVeh(oldVeh)
   if cruise == 'limit' and oldVeh and DoesEntityExist(oldVeh) then SetVehicleMaxSpeed(oldVeh, 0.0) end
   belt, blink, cruise, anchor = false, 0, nil, false
@@ -167,7 +180,7 @@ RegisterCommand('hud_seatbelt', function()
   local c = GetVehicleClass(veh)
   if c == 8 or c == 13 or c == 14 then return end
   belt = not belt
-  SetPedConfigFlag(PlayerPedId(), 32, not belt)
+  applyWindscreenFlag()
 end, false)
 
 local function setBlink(v)
@@ -195,7 +208,6 @@ local function setCruise(mode)
   local kmh = GetEntitySpeed(veh) * 3.6
   if mode == 'cruise' and kmh < 25 then return end
   cruiseSpd = math.max(mode == 'cruise' and 30 or 20, math.floor(kmh / 5 + 0.5) * 5)
-  if cruiseSpd == 0 then cruiseSpd = 50 end
   cruise = mode
   if mode == 'limit' then SetVehicleMaxSpeed(veh, cruiseSpd / 3.6) else SetVehicleMaxSpeed(veh, 0.0) end
 end
@@ -227,11 +239,12 @@ RegisterCommand('hud_cinema', function()
 end, false)
 RegisterKeyMapping('hud_cinema', T.cinema, 'keyboard', Config.Keys.cinema or '')
 
--- Notifications au style du HUD (appelé par ox_lib et esx_notify) ; false = laisser l'affichage d'origine
+-- Notifications au style du HUD (à brancher dans ox_lib / esx_notify : ils ne l'appellent pas d'eux-mêmes) ;
+-- false = laisser l'affichage d'origine
 exports('Notify', function(data)
   local N = Config.Notifications
   if not (N and N.enabled) or type(data) ~= 'table' then return false end
-  local function clean(s) return type(s) == 'string' and s:gsub('~%a~', ''):gsub('~h~', '') or nil end
+  local function clean(s) return type(s) == 'string' and (s:gsub('~%a~', '')) or nil end
   SendNUIMessage({ t = 'notify', d = {
     title = clean(data.title), text = clean(data.description), type = data.type or 'info',
     duration = tonumber(data.duration) or N.duration or 5000,
@@ -300,7 +313,7 @@ end)
 
 ---------------------------------------------------------------- portée de voix : cercle au sol
 local circleUntil, circleDist, lastProx = 0, 0, nil
-function showVoiceCircle(dist)
+local function showVoiceCircle(dist)
   local VC = Config.VoiceCircle
   if not (VC and VC.enabled) or not dist then return end
   local running = GetGameTimer() < circleUntil
@@ -334,18 +347,26 @@ local function crashCheck(veh, ped)
     SetEntityHealth(ped, math.max(101, GetEntityHealth(ped) - S.beltDamage))
     return
   end
-  -- Éjection par le pare-brise, dans le sens de la marche
+  -- Éjection par le pare-brise, dans le sens de la marche : le ped est posé devant le capot (et non 1 m devant
+  -- son siège, ce qui le laissait dans la carrosserie), puis passe en ragdoll avant de recevoir sa vitesse
+  -- (une vitesse donnée avant le ragdoll est perdue)
   local fwd = GetEntityForwardVector(veh)
-  local pos = GetEntityCoords(ped)
-  SetEntityCoords(ped, pos.x + fwd.x, pos.y + fwd.y, pos.z + 0.5, false, false, false, false)
-  SetEntityVelocity(ped, fwd.x * before / 3.6 * 0.8, fwd.y * before / 3.6 * 0.8, 2.0)
-  SetPedToRagdoll(ped, 4000, 4000, 0, false, false, false)
+  local _, dmax = GetModelDimensions(GetEntityModel(veh))
+  local out = GetOffsetFromEntityInWorldCoords(veh, 0.0, dmax.y + 1.0, 0.6)
+  local vx, vy = fwd.x * before / 3.6 * 0.8, fwd.y * before / 3.6 * 0.8
+  SetEntityCoords(ped, out.x, out.y, out.z, false, false, false, false)
   SetEntityHealth(ped, math.max(101, GetEntityHealth(ped) - S.ejectDamage))
   prevSpeed = 0
+  CreateThread(function()
+    Wait(1)
+    SetPedToRagdoll(ped, 4000, 4000, 0, false, false, false)
+    SetEntityVelocity(ped, vx, vy, 2.0)
+  end)
 end
 
 ---------------------------------------------------------------- envoi au HUD
 local lastSprint, staminaInverted = 0, false
+local oxyMax = 10.0 -- secondes d'apnée maximum observées
 local function stats(ped)
   local hp = math.max(0, GetEntityHealth(ped) - 100) / math.max(1, GetEntityMaxHealth(ped) - 100) * 100
   local pid = PlayerId()
@@ -357,8 +378,15 @@ local function stats(ped)
     if raw >= 90 then staminaInverted = false elseif raw <= 10 then staminaInverted = true end
   end
   local stam = math.max(0, math.min(100, staminaInverted and 100 - raw or raw))
+  -- Oxygène : secondes restantes rapportées au maximum observé (la capacité dépend du personnage, pas de 10 s fixes)
   local oxy = 100
-  if IsPedSwimmingUnderWater(ped) then oxy = math.max(0, math.min(100, GetPlayerUnderwaterTimeRemaining(pid) * 10)) end
+  local left = GetPlayerUnderwaterTimeRemaining(pid)
+  if IsPedSwimmingUnderWater(ped) then
+    oxyMax = math.max(oxyMax, left)
+    oxy = math.max(0, math.min(100, left / oxyMax * 100))
+  elseif left > 0 then
+    oxyMax = math.max(10.0, left)
+  end
   return {
     health = math.floor(hp + 0.5), armor = GetPedArmour(ped),
     hunger = math.floor(needs.hunger + 0.5), thirst = math.floor(needs.thirst + 0.5), stress = math.floor(needs.stress + 0.5),
@@ -376,7 +404,7 @@ local function vehicleData(veh)
   local d = {
     cls = cls, speed = speed, rpm = GetVehicleCurrentRpm(veh),
     gear = speed < 1 and 'N' or (gear == 0 and 'R' or tostring(gear)),
-    fuel = fuelOf(veh), engine = GetVehicleEngineHealth(veh) / 10,
+    fuel = fuelOf(veh), engine = math.max(0, GetVehicleEngineHealth(veh) / 10),
     belt = belt, lights = (high == 1) and 2 or ((on == 1) and 1 or 0),
     blink = blink, cruise = cruise, cruiseSpd = cruiseSpd, anchor = anchor,
   }
@@ -416,7 +444,11 @@ CreateThread(function()
   while true do
     local ped = PlayerPedId()
     local veh = GetVehiclePedIsIn(ped, false)
-    if veh ~= lastVeh then if lastVeh ~= 0 then resetVeh(lastVeh) end lastVeh = veh; prevSpeed = 0; trip, tripPos = 0.0, nil; fuelRef, fuelWarned = nil, false end
+    if veh ~= lastVeh then
+      if lastVeh ~= 0 then resetVeh(lastVeh) end
+      lastVeh = veh; prevSpeed = 0; trip, tripPos = 0.0, nil; fuelRef, fuelWarned = nil, false
+      if veh ~= 0 then applyWindscreenFlag() end
+    end
     if veh ~= 0 then
       local p = GetEntityCoords(veh)
       if tripPos then local dd = #(p - tripPos); if dd < 60.0 then trip = trip + dd / 1000.0 end end -- au-delà : téléportation
@@ -454,7 +486,10 @@ CreateThread(function()
     local rc = LocalPlayer.state.radioChannel
     voice.radio = rc ~= nil and rc ~= 0
 
-    DisplayRadar(not cinema and not hideMap and (not (Config.MinimapOnlyInVehicle or mapVeh) or veh ~= 0))
+    -- Minimap : seulement quand l'état voulu par le HUD change, pour laisser les autres ressources la cacher
+    -- (mode /cinema du serveur, menus, intérieurs…) au lieu de la réafficher à chaque mise à jour
+    local radar = not cinema and not hideMap and (not (Config.MinimapOnlyInVehicle or mapVeh) or veh ~= 0)
+    if radar ~= lastRadar then DisplayRadar(radar); lastRadar = radar end
 
     SendNUIMessage({ t = 'u', d = {
       show = not cinema and not IsPauseMenuActive() and not IsScreenFadedOut() and not IsHudHidden(),

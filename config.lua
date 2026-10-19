@@ -1,6 +1,6 @@
 Config = {}
 
--- 'auto' détecte qb-core / qbx_core / es_extended. Sinon 'qb', 'esx' ou 'standalone'.
+-- 'auto' détecte qb-core ou es_extended (qbx_core seulement s'il fournit qb-core). Sinon 'qb', 'esx' ou 'standalone'.
 Config.Framework = 'auto'
 
 -- Langue : 'fr' ou 'en' (HUD, réglages et noms des touches)
@@ -29,9 +29,9 @@ Config.Keys = {
   hazard = 'DOWN',
   limiter = 'L',
   cruise = 'J',
-  anchor = '',
-  cinema = 'F7',
-  vehicleMenu = 'F9',   -- menu véhicule : moteur, phares, portes, fenêtres, radio, sièges        -- mode cinématique : cache tout le HUD + bandes noires          -- ancre du bateau (vide = pas de touche par défaut, commande /ancre)
+  anchor = '',          -- ancre du bateau (vide = pas de touche par défaut, commande /ancre)
+  cinema = 'F7',        -- mode cinématique : cache tout le HUD + bandes noires
+  vehicleMenu = 'F9',   -- menu véhicule : moteur, phares, portes, fenêtres, radio, sièges
 }
 
 -- Ceinture : sans ceinture, un choc violent éjecte par le pare-brise ; attachée, elle réduit les blessures
@@ -51,7 +51,8 @@ Config.VoiceCircle = {
   color = { r = 145, g = 132, b = 217 },   -- couleur d'accent du HUD
 }
 
--- Notifications au style du HUD (remplacent celles d'ox_lib et d'esx_notify quand le HUD tourne)
+-- Notifications au style du HUD, via exports.nocturne_hud:Notify(data). Attention : ox_lib et esx_notify ne
+-- l'appellent pas d'eux-mêmes ; il faut les y brancher pour que leurs notifications passent par le HUD.
 Config.Notifications = {
   enabled = true,
   duration = 5000,      -- ms par défaut

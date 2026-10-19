@@ -83,7 +83,7 @@ function applyColors() {
 const $ = id => document.getElementById(id);
 const layer = $('layer'), statsEl = $('stats'), panel = $('panel'), pbody = $('pbody');
 let D = null, edit = false, sel = 'vehicle', u = 1, sp = {}, tab = 'general', ctgt = 'accent';
-let lastCash = null, cashDelta = 0, cashT = 0;
+let lastCash = null, cashDelta = 0, cashT = 0, firstSlow = null;
 
 const fit = () => { u = innerHeight / 1080; layer.style.width = (innerWidth / u) + 'px'; layer.style.transform = `scale(${u})`; };
 addEventListener('resize', fit); fit();
@@ -244,7 +244,7 @@ function renderVehicle(now, sc) {
   $('vtLabel').textContent = tr(labels[v.cls] || '');
   const motor = v.cls !== 'bike';
   $('fuelBox').style.display = motor ? 'flex' : 'none';
-  const fc = v.fuel < 15 ? DANGER : '#cfd3e5';
+  const fc = v.fuel < (v.fuelWarn || 10) ? DANGER : '#cfd3e5'; // même seuil que le bip (Config.Fuel.warn)
   const mi = cfg.unit === 'mph' && !kts, f = mi ? 0.621 : 1, u2 = mi ? ' mi' : ' km';
   const odo = typeof v.km === 'number' ? Math.floor(v.km * f).toLocaleString(LOC) + u2 : '';
   const trip = typeof v.trip === 'number' && v.trip >= 0.1 ? tr('trajet') + ' ' + (v.trip * f).toLocaleString(LOC, { minimumFractionDigits: 1, maximumFractionDigits: 1 }) + u2 : '';
@@ -267,7 +267,9 @@ function setLang(l) {
 }
 function onSlow(d) {
   if (d.lang && d.lang !== LANG) setLang(d.lang);
-  if (lastCash !== null && d.cash !== lastCash) { cashDelta = d.cash - lastCash; cashT = Date.now(); }
+  // Pas de « +$ » au chargement du personnage : l'argent passe de 0 au vrai solde dans les premières secondes
+  if (firstSlow === null) firstSlow = Date.now();
+  if (lastCash !== null && d.cash !== lastCash && Date.now() - firstSlow > 5000) { cashDelta = d.cash - lastCash; cashT = Date.now(); }
   lastCash = d.cash; slow = d; if (D) D = { ...D, ...slow };
 }
 function onData(d) { D = { ...slow, ...d }; render(); }
