@@ -49,3 +49,9 @@ Exemple : `exports.nocturne_hud:SetNeeds(80, 65, nil)`
 
 ## Joueurs connectés
 Le serveur publie le nombre réel de joueurs et les slots (`sv_maxclients`) ; `Config.MaxPlayers` ne sert qu'en secours.
+
+## Licence
+Code sous licence [Creative Commons BY-NC-SA 4.0](https://creativecommons.org/licenses/by-nc-sa/4.0/deed.fr) (fichier `LICENSE`) :
+utilisation et modification libres sur votre serveur, en citant l'auteur ; **revente et tout usage commercial interdits**
+(y compris sur Tebex) ; les versions modifiées partagées restent sous la même licence.
+Les polices Inter et Sora (`html/fonts`) gardent leur propre licence SIL OFL 1.1 (`html/fonts/OFL-*.txt`).

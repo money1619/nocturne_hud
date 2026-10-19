@@ -18,8 +18,3 @@ files {
   'html/fonts/fonts.css',
   'html/fonts/*.woff2'
 }
-
--- Cfx.re Asset Escrow : fichiers laissés lisibles et modifiables par l'acheteur (le reste est chiffré)
-escrow_ignore {
-    'config.lua',
-}
