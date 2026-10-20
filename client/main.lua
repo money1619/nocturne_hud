@@ -35,6 +35,7 @@ local externalHidden = false -- HUD caché par une autre ressource (exports.noct
 local lastFast, lastFastAt = '', 0 -- dernière mise à jour envoyée à la page (et quand)
 local belt, blink, cruise, cruiseSpd, anchor = false, 0, nil, 0, false -- blink: 0 off, 1 gauche, 2 droite, 3 warnings
 local lastVeh = 0
+local anchoredVehicles = {} -- état d'ancre conservé quand le joueur débarque
 
 ---------------------------------------------------------------- framework
 local function refreshQB()
@@ -102,9 +103,29 @@ AddEventHandler('esx_status:onTick', function(st)
 end)
 
 -- API pour d'autres ressources (standalone ou custom)
-exports('SetNeeds', function(h, t, s) needs.hunger = h or needs.hunger; needs.thirst = t or needs.thirst; needs.stress = s or needs.stress end)
-exports('SetMoney', function(c, b) money.cash = c or money.cash; money.bank = b or money.bank end)
-exports('SetJob', function(label) job = label or '' end)
+local function validNumber(value)
+  return type(value) == 'number' and value == value and value ~= math.huge and value ~= -math.huge
+end
+
+local function setNeed(key, value)
+  if validNumber(value) then needs[key] = math.max(0, math.min(100, value)) end
+end
+
+exports('SetNeeds', function(h, t, s)
+  setNeed('hunger', h)
+  setNeed('thirst', t)
+  setNeed('stress', s)
+end)
+
+exports('SetMoney', function(c, b)
+  if validNumber(c) then money.cash = c end
+  if validNumber(b) then money.bank = b end
+end)
+
+exports('SetJob', function(label)
+  if label == nil then job = ''
+  elseif type(label) == 'string' then job = label:sub(1, 128) end
+end)
 
 -- Jauges toxicité / addiction / alcool : envoyées par AEOM_DRUG_SYSTEM à chaque changement
 local function setDrugs(d)
@@ -172,7 +193,13 @@ local function applyWindscreenFlag()
 end
 
 local function resetVeh(oldVeh)
-  if cruise == 'limit' and oldVeh and DoesEntityExist(oldVeh) then SetVehicleMaxSpeed(oldVeh, 0.0) end
+  if oldVeh and oldVeh ~= 0 and DoesEntityExist(oldVeh) then
+    if cruise == 'limit' then SetVehicleMaxSpeed(oldVeh, 0.0) end
+    if blink ~= 0 then
+      SetVehicleIndicatorLights(oldVeh, 0, false)
+      SetVehicleIndicatorLights(oldVeh, 1, false)
+    end
+  end
   belt, blink, cruise, anchor = false, 0, nil, false
   SetPedConfigFlag(PlayerPedId(), 32, true)
 end
@@ -225,6 +252,7 @@ local function toggleAnchor()
   anchor = not anchor
   SetBoatAnchor(veh, anchor)
   SetBoatFrozenWhenAnchored(veh, anchor)
+  anchoredVehicles[veh] = anchor and true or nil
 end
 RegisterCommand('ancre', toggleAnchor, false)
 RegisterCommand('hud_anchor', toggleAnchor, false)
@@ -483,6 +511,7 @@ CreateThread(function()
     if veh ~= lastVeh then
       if lastVeh ~= 0 then resetVeh(lastVeh) end
       lastVeh = veh; prevSpeed = 0; trip, tripPos = 0.0, nil; fuelRef, fuelWarned = nil, false
+      anchor = veh ~= 0 and anchoredVehicles[veh] == true or false
       if veh ~= 0 then applyWindscreenFlag() end
     end
     if veh ~= 0 then
@@ -579,8 +608,14 @@ AddEventHandler('onResourceStop', function(res)
   if editing then SetNuiFocus(false, false) end
   DisplayRadar(true)
   local veh = GetVehiclePedIsIn(PlayerPedId(), false)
-  if cruise == 'limit' and veh ~= 0 then SetVehicleMaxSpeed(veh, 0.0) end
-  SetPedConfigFlag(PlayerPedId(), 32, true)
+  resetVeh(lastVeh ~= 0 and lastVeh or veh)
+  for boat in pairs(anchoredVehicles) do
+    if DoesEntityExist(boat) then
+      SetBoatAnchor(boat, false)
+      SetBoatFrozenWhenAnchored(boat, false)
+    end
+    anchoredVehicles[boat] = nil
+  end
 end)
 
 ---------------------------------------------------------------- menu véhicule (ox_lib)
@@ -700,5 +735,6 @@ CreateThread(function()
     Wait(60000)
     for v in pairs(winDown) do if not DoesEntityExist(v) then winDown[v] = nil end end
     for v in pairs(lightMode) do if not DoesEntityExist(v) then lightMode[v] = nil end end
+    for v in pairs(anchoredVehicles) do if not DoesEntityExist(v) then anchoredVehicles[v] = nil end end
   end
 end)

@@ -1,6 +1,7 @@
 fx_version 'cerulean'
 game 'gta5'
 lua54 'yes'
+dependency 'ox_lib'
 
 name 'nocturne_hud'
 description 'HUD joueur Nocturne — statuts, argent, voix, véhicule (voiture, moto, vélo, bateau, hélico, avion)'
