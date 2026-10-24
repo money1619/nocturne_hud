@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://money1619.github.io/nocturne_hud/sitemap.xml

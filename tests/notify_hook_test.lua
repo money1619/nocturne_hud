@@ -2,9 +2,11 @@
 -- Charge les VRAIS fichiers installés et vérifie : HUD démarré et Notify vrai → affichage HUD seul ;
 -- HUD arrêté, Notify faux ou en erreur → affichage d'origine. Doubles de natives, pas un essai GTA.
 -- Usage (depuis nocturne_hud/) : lua5.4 tests/notify_hook_test.lua [dossier resources]
-local RES = arg[1] or '../..'
+local RES = arg[1] or '../../../[licences]' -- dossier qui contient [ox] et [esx] (disposition du serveur)
 local OXLIB = RES .. '/[ox]/ox_lib/resource/interface/client/notify.lua'
-local ESXN = RES .. '/[core]/esx_notify/Notify.lua'
+local ESXN = RES .. '/[esx]/esx_notify/Notify.lua'
+table.clone = table.clone or function(t) local c = {} for k, v in pairs(t) do c[k] = v end return c end -- intégré à CfxLua
+Config = Config or {} -- config d'esx_notify (position par défaut)
 
 local state, hudResult, hudCalls, origCalls, sounds = 'started', true, {}, {}, 0
 local function resetCase(st, res) state, hudResult, hudCalls, origCalls, sounds = st, res, {}, {}, 0 end

@@ -66,6 +66,7 @@ function SetControlNormal(_, c, v) log('SetControlNormal', c, v) end
 function DisableControlAction(...) log('DisableControlAction', ...) end
 function HideHudComponentThisFrame() end
 function DisplayRadar(v) W.radar[#W.radar + 1] = v; log('DisplayRadar', v) end
+function SetMinimapComponentPosition(...) log('SetMinimapComponentPosition', ...) end
 function SendNUIMessage(m) W.nui[#W.nui + 1] = m end
 function IsPedSwimmingUnderWater() return W.ped.under end
 function GetPlayerUnderwaterTimeRemaining() return W.ped.air end
@@ -78,6 +79,9 @@ function GetEntityModel() return 99 end
 function GetModelDimensions() return vector3(-1.0, -2.4, -0.6), vector3(1.0, 2.4, 0.9) end
 function GetOffsetFromEntityInWorldCoords(_, ox, oy, oz) local p = W.ped return vector3(p.x + ox, p.y + oy, p.z + oz) end
 function GetVehicleFuelLevel() return W.veh.fuel or 60.0 end
+-- vitesse vectorielle : le long de l'axe du véhicule (y), vers l'arrière si W.veh.reverse
+function GetEntityVelocity() return vector3(0.0, W.veh.speed / 3.6 * (W.veh.reverse and -1 or 1), 0.0) end
+function GetEntitySpeedVector() return vector3(0.0, W.veh.speed / 3.6 * (W.veh.reverse and -1 or 1), 0.0) end
 function GetVehicleNumberPlateText() return 'ABC123' end
 function GetVehicleLightsState() return true, 0, 0 end
 function GetVehicleCurrentGear() return 3 end
@@ -106,9 +110,13 @@ function IsPedSprinting() return false end
 function IsPedRunning() return false end
 function PlaySoundFrontend(...) log('PlaySoundFrontend', ...) end
 LocalPlayer = { state = {} }
+local vehState = {} -- state bags des véhicules ([id] = { nh_km = ... })
+function Entity(e) vehState[e] = vehState[e] or {}; return { state = vehState[e] } end
+function NetworkGetEntityIsNetworked() return true end
+function VehToNet(v) return v + 100 end
+function TriggerServerEvent(n, ...) log('TriggerServerEvent', n, ...) end
 GlobalState = {}
 json = { encode = function(t) local s = {} for k, v in pairs(t) do s[#s + 1] = tostring(k) .. '=' .. tostring(v) end table.sort(s) return table.concat(s, ',') end }
-lib = { registerContext = function() end, showContext = function() end, notify = function() end }
 local handlers, commands, nuicb, exported = {}, {}, {}, {}
 function RegisterNetEvent(n, fn) if fn then handlers[n] = fn end end
 function AddEventHandler(n, fn) handlers[n] = handlers[n] or {}; if type(handlers[n]) == 'table' then table.insert(handlers[n], fn) else handlers[n] = { handlers[n], fn } end end
@@ -152,7 +160,7 @@ W.ped.under = false
 W.calls = {}; W.ped.health = 200
 enterVehicle(100)
 commands['hud_seatbelt']()
-W.veh.speed = 40; run(200)
+W.veh.collided = true; W.veh.speed = 40; run(200); W.veh.collided = false
 check('ceinture attachée : choc de 100 à 40 km/h encaissé, pas d\'éjection', count('SetEntityCoords') == 0 and W.ped.health == 200 - Config.Seatbelt.beltDamage)
 check('ceinture attachée : sortie du véhicule bloquée (contrôle 75)', (function() for _, c in ipairs(W.calls) do if c[1] == 'DisableControlAction' and c[3] == 75 then return true end end end)())
 commands['hud_seatbelt']()
@@ -160,12 +168,25 @@ commands['hud_seatbelt']()
 -- Sans ceinture : une seule éjection, joueur sorti avant la vitesse, pas d'éjection native en double
 W.calls = {}; W.ped.health = 200; W.veh.speed = 100; W.ped.inVeh = W.veh.id; run(200)
 local flagAtCrash = W.flags[32]
-W.veh.speed = 40; run(200)
+W.veh.collided = true; W.veh.speed = 40; run(200); W.veh.collided = false
 check('sans ceinture : choc de 100 à 40 km/h → une éjection', count('SetEntityCoords') == 1)
 check('sans ceinture : dégâts d\'éjection appliqués', W.ped.health == 200 - Config.Seatbelt.ejectDamage)
 local iRag, iVel = index('SetPedToRagdoll'), index('SetEntityVelocity')
 check('éjection : ragdoll avant la vitesse (sinon la vitesse est perdue)', iRag and iVel and iRag < iVel, true)
 check('sans ceinture : éjection native du jeu (flag 32) coupée, pour ne pas éjecter deux fois', flagAtCrash == false, true)
+local function ejectY() for _, c in ipairs(W.calls) do if c[1] == 'SetEntityCoords' then return c[3] end end end
+check('marche avant : éjecté devant le capot', (ejectY() or 0) > 2.4)
+
+-- Chute de vitesse sans collision (réception de saut, téléportation) : pas d'éjection
+W.calls = {}; W.ped.health = 200; W.ped.inVeh = W.veh.id; W.veh.speed = 100; run(500) -- dernière collision > 300 ms
+W.veh.speed = 40; run(200)
+check("chute de vitesse sans collision : pas d'éjection", count('SetEntityCoords') == 0 and W.ped.health == 200)
+
+-- Marche arrière : éjecté derrière le coffre, vitesse vers l'arrière
+W.calls = {}; W.ped.health = 200; W.ped.inVeh = W.veh.id; W.veh.reverse = true; W.veh.speed = 100; run(200)
+W.veh.collided = true; W.veh.speed = 40; run(200); W.veh.collided = false; W.veh.reverse = false
+local velY; for _, c in ipairs(W.calls) do if c[1] == 'SetEntityVelocity' then velY = c[4] end end
+check("marche arrière : éjecté derrière le coffre, vers l'arrière", (ejectY() or 0) < -2.4 and velY and velY < 0)
 
 -- Freinage fort mais pas un choc : pas d'éjection
 W.calls = {}; W.ped.health = 200; W.ped.inVeh = W.veh.id; W.veh.speed = 100; run(200)
@@ -242,6 +263,30 @@ W.ped.inVeh = W.veh.id; W.veh.class = 0; W.veh.speed = 50; run(300)
 local tv = lastU()
 check('trajet en cours retiré : ni trip ni km inventé', tv and tv.veh and tv.veh.trip == nil and tv.veh.km == nil)
 
+-- 1.8.0 : compteur kilométrique propre au HUD (state bag nh_km publié par le serveur du HUD, aucune autre ressource)
+local function serverEvents(name)
+  local out = {}
+  for _, c in ipairs(W.calls) do if c[1] == 'TriggerServerEvent' and c[2] == name then out[#out + 1] = c end end
+  return out
+end
+W.ped.inVeh = 0; run(300); W.calls = {}
+W.ped.inVeh = W.veh.id; run(300)
+local req = serverEvents('nocturne_hud:odoRequest')
+check('entrée en véhicule : compteur demandé au serveur du HUD (netId)', #req == 1 and req[1][3] == W.veh.id + 100)
+vehState[W.veh.id] = { nh_km = 1234.5 }; run(300)
+check('compteur publié : kilométrage affiché', lastU().veh.km == 1234.5)
+for _ = 1, 110 do W.ped.x = W.ped.x + 10.0; run(100) end -- 1,1 km en 11 s
+local add = serverEvents('nocturne_hud:odoAdd')
+check('distance conduite envoyée au serveur toutes les 10 s', #add == 1 and add[1][4] > 0.9 and add[1][4] < 1.2)
+check('affichage = total serveur + distance pas encore confirmée, sans recul', lastU().veh.km >= 1234.5 + 0.9)
+W.ped.x = W.ped.x + 5000.0; run(300)
+check('téléportation : pas comptée au compteur', lastU().veh.km < 1234.5 + 1.3)
+for _ = 1, 5 do W.ped.x = W.ped.x + 10.0; run(100) end
+W.calls = {}; W.ped.inVeh = 0; run(300)
+add = serverEvents('nocturne_hud:odoAdd')
+check('en descendant : distance restante envoyée', #add == 1 and add[1][3] == W.veh.id + 100)
+W.ped.inVeh = W.veh.id; run(300)
+
 -- 1.7.1 : décrochage selon le modèle, train rentré, en chute
 local P = { agl = 100.0, vz = -5.0, gear = 4, max = 70.0 } -- max en m/s (252 km/h) → seuil 88 km/h
 function GetEntityHeightAboveGround() return P.agl end
@@ -259,27 +304,12 @@ P.vz, P.agl = -5.0, 10.0
 check('près du sol (33 ft) : pas de décrochage', plane(70).stall == false)
 W.veh.class = 0
 
--- 1.7.1 : radio du menu F9 sans station débloquée : pas d'erreur (modulo par 0)
-local menus = {}
-lib.registerContext = function(c) menus[c.id] = c end
-lib.showContext = function() end
-local GRS = GetResourceState
-GetResourceState = function(r) return r == 'ox_lib' and 'started' or 'missing' end
-function GetNumUnlockedRadioStations() return 0 end
-function GetPlayerRadioStationName() return nil end
-W.ped.inVeh = W.veh.id; W.veh.speed = 0
-commands['hud_vehmenu']()
-local radioOpt
-for _, o in ipairs(menus.nh_vehicle and menus.nh_vehicle.options or {}) do if o.icon == 'radio' then radioOpt = o end end
-local okRadio = radioOpt and pcall(radioOpt.onSelect)
-GetResourceState = GRS
-check('menu F9 : station suivante sans station débloquée, sans erreur', okRadio == true)
-run(200)
-
 -- Arrêt de la ressource : minimap rendue, éjection native rétablie
 W.calls = {}
 fire('onResourceStop', 'nocturne_hud')
 check('arrêt : minimap réaffichée et flag 32 rétabli', W.radar[#W.radar] == true and W.flags[32] == true)
+local mmw; for _, c in ipairs(W.calls) do if c[1] == 'SetMinimapComponentPosition' and c[2] == 'minimap' then mmw = c[7] end end
+check("arrêt : taille d'origine de la minimap rétablie", mmw == 0.150)
 
 print(('RESULT %d passed, %d failed (%d défaut(s) connu(s) de la 1.6.0) ; doubles de natives, pas un essai GTA'):format(passed, failed, known))
 os.exit(failed - known == 0 and 0 or 1)

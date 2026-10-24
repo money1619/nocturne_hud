@@ -1,22 +1,10 @@
 local LOCALES = {
   fr = { seatbelt = 'HUD · Ceinture', left = 'HUD · Clignotant gauche', right = 'HUD · Clignotant droit', hazard = 'HUD · Warnings',
-         limiter = 'HUD · Limiteur de vitesse', cruise = 'HUD · Régulateur de vitesse', anchor = 'HUD · Ancre (bateau)', cinema = 'HUD · Mode cinématique', vmenu = 'HUD · Menu véhicule',
-         m_title = 'Véhicule', m_engine = 'Moteur', m_lights = 'Phares', m_doors = 'Portes', m_windows = 'Fenêtres', m_seats = 'Changer de siège',
-         m_radio = 'Radio', m_radio_next = 'Station suivante', m_radio_off = 'Éteindre la radio', m_on = 'Allumé', m_off = 'Éteint',
-         m_open = 'Ouverte', m_closed = 'Fermée', m_down = 'Baissée', m_up = 'Montée', m_all_open = 'Tout ouvrir', m_all_close = 'Tout fermer',
-         m_free = 'Libre', m_taken = 'Occupé', m_driver = 'Conducteur', m_passenger = 'Passager', m_back = 'Arrière', m_slow = 'Arrêtez-vous d\'abord',
-         m_only_driver = 'Réservé au conducteur', m_lights_auto = 'Auto', m_lights_on = 'Allumés', m_lights_off = 'Éteints',
-         doors = { 'Avant gauche', 'Avant droite', 'Arrière gauche', 'Arrière droite', 'Capot', 'Coffre' } },
+         limiter = 'HUD · Limiteur de vitesse', cruise = 'HUD · Régulateur de vitesse', anchor = 'HUD · Ancre (bateau)', cinema = 'HUD · Mode cinématique' },
   en = { seatbelt = 'HUD · Seatbelt', left = 'HUD · Left indicator', right = 'HUD · Right indicator', hazard = 'HUD · Hazard lights',
-         limiter = 'HUD · Speed limiter', cruise = 'HUD · Cruise control', anchor = 'HUD · Anchor (boat)', cinema = 'HUD · Cinematic mode', vmenu = 'HUD · Vehicle menu',
-         m_title = 'Vehicle', m_engine = 'Engine', m_lights = 'Headlights', m_doors = 'Doors', m_windows = 'Windows', m_seats = 'Change seat',
-         m_radio = 'Radio', m_radio_next = 'Next station', m_radio_off = 'Turn radio off', m_on = 'On', m_off = 'Off',
-         m_open = 'Open', m_closed = 'Closed', m_down = 'Down', m_up = 'Up', m_all_open = 'Open all', m_all_close = 'Close all',
-         m_free = 'Free', m_taken = 'Taken', m_driver = 'Driver', m_passenger = 'Passenger', m_back = 'Rear', m_slow = 'Stop first',
-         m_only_driver = 'Driver only', m_lights_auto = 'Auto', m_lights_on = 'On', m_lights_off = 'Off',
-         doors = { 'Front left', 'Front right', 'Rear left', 'Rear right', 'Hood', 'Trunk' } },
+         limiter = 'HUD · Speed limiter', cruise = 'HUD · Cruise control', anchor = 'HUD · Anchor (boat)', cinema = 'HUD · Cinematic mode' },
 }
-local T = LOCALES[Config.Locale] or LOCALES.fr -- langue inconnue : français (sinon touches et menus sans texte)
+local T = LOCALES[Config.Locale] or LOCALES.fr -- langue inconnue : français (sinon touches sans texte)
 local QB, ESX
 local needs = { hunger = 100, thirst = 100, stress = 0 }
 local drugs = { toxicity = 0, addiction = 0, alcohol = 0 } -- AEOM_DRUG_SYSTEM (0-100)
@@ -32,6 +20,8 @@ local fuelRef, tripRef, fuelWarned = nil, 0.0, false
 local cinema = false
 local lastRadar = nil -- dernier état de minimap appliqué par le HUD
 local externalHidden = false -- HUD caché par une autre ressource (exports.nocturne_hud:toggleHud(false))
+local radarWanted = false -- minimap voulue par le HUD (réglages joueur, cinéma, toggleHud)
+local minimapReplaced = false -- minimap native remplacée par une autre ressource (underworld_map3d : minimap GPS)
 local lastFast, lastFastAt = '', 0 -- dernière mise à jour envoyée à la page (et quand)
 local belt, blink, cruise, cruiseSpd, anchor = false, 0, nil, 0, false -- blink: 0 off, 1 gauche, 2 droite, 3 warnings
 local lastVeh = 0
@@ -166,17 +156,18 @@ local function minimapAnchor()
   return { x = x, y = bottom - h, w = w, h = h }
 end
 
+-- Minimap de remplacement (ex. minimap GPS d'underworld_map3d) : le HUD continue de décider QUAND une minimap
+-- doit être visible (réglages /hudsetting, cinéma, toggleHud) ; la ressource qui la remplace affiche la sienne
+-- à la place de la native, au même endroit, et la native reste cachée tant que le remplacement est actif.
+exports('setMinimapReplaced', function(on) minimapReplaced = on == true; lastRadar = nil end)
+exports('isMinimapWanted', function() return radarWanted end)
+exports('getMinimapAnchor', minimapAnchor)
+
 local CLS = { [8] = 'moto', [13] = 'bike', [14] = 'boat', [15] = 'heli', [16] = 'plane' }
 
-local fuelRes, mileageRes = false, false -- rafraîchis chaque seconde (boucle lente)
-
-local function fuelOf(veh)
-  if fuelRes then
-    local ok, v = pcall(function() return exports[Config.FuelResource]:GetFuel(veh) end)
-    if ok and v then return v end
-  end
-  return GetVehicleFuelLevel(veh)
-end
+-- Compteur kilométrique du HUD : total tenu par le serveur du HUD (state bag nh_km du véhicule), plus la distance
+-- conduite pas encore envoyée. Affichage jamais en recul (le state bag arrive un peu après l'envoi)
+local odoPending, odoShown, odoSentAt, odoAskedAt = 0.0, 0.0, 0, 0
 
 local function myVeh()
   local ped = PlayerPedId()
@@ -329,13 +320,16 @@ RegisterNUICallback('prof', function(d, cb)
 end)
 
 ---------------------------------------------------------------- minimap : taille + barres natives
+-- Taille de la minimap native (1.0 = positions d'origine de GTA, rétablies à l'arrêt de la ressource)
+local function setMinimapScale(s)
+  SetMinimapComponentPosition('minimap', 'L', 'B', -0.0045, 0.002 * s, 0.150 * s, 0.188888 * s)
+  SetMinimapComponentPosition('minimap_mask', 'L', 'B', 0.020 * s, 0.032 * s, 0.111 * s, 0.159 * s)
+  SetMinimapComponentPosition('minimap_blur', 'L', 'B', -0.03 * s, 0.022 * s, 0.266 * s, 0.237 * s)
+end
+
 CreateThread(function()
   local s = Config.MinimapScale or 1.0
-  if s ~= 1.0 then
-    SetMinimapComponentPosition('minimap', 'L', 'B', -0.0045, 0.002 * s, 0.150 * s, 0.188888 * s)
-    SetMinimapComponentPosition('minimap_mask', 'L', 'B', 0.020 * s, 0.032 * s, 0.111 * s, 0.159 * s)
-    SetMinimapComponentPosition('minimap_blur', 'L', 'B', -0.03 * s, 0.022 * s, 0.266 * s, 0.237 * s)
-  end
+  if s ~= 1.0 then setMinimapScale(s) end
   SetRadarBigmapEnabled(true, false); Wait(0); SetRadarBigmapEnabled(false, false)
   if not Config.HideMinimapBars then return end
   local mm = RequestScaleformMovie('minimap')
@@ -349,15 +343,18 @@ CreateThread(function()
 end)
 
 ---------------------------------------------------------------- boucle par frame (contrôles)
+local lastHit = -1000 -- dernière collision du véhicule (ms), relevée à chaque frame pour crashCheck (tick plus lent)
 CreateThread(function()
   while true do
     local ped = PlayerPedId()
     local veh = GetVehiclePedIsIn(ped, false)
     for _, c in ipairs(Config.HideNative) do HideHudComponentThisFrame(c) end
     if veh ~= 0 then
+      local hit = HasEntityCollidedWithAnything(veh)
+      if hit then lastHit = GetGameTimer() end
       if belt then DisableControlAction(0, 75, true) end -- pas de sortie ceinture attachée
       if cruise == 'cruise' and GetPedInVehicleSeat(veh, -1) == ped then
-        if IsControlPressed(0, 72) or IsControlPressed(0, 76) or HasEntityCollidedWithAnything(veh) then
+        if IsControlPressed(0, 72) or IsControlPressed(0, 76) or hit then
           cruise = nil
         elseif not IsControlPressed(0, 71) and GetEntitySpeed(veh) * 3.6 < cruiseSpd - 0.5 and IsVehicleOnAllWheels(veh) then
           SetControlNormal(0, 71, 0.85)
@@ -391,26 +388,28 @@ local function showVoiceCircle(dist)
 end
 
 ---------------------------------------------------------------- ceinture : choc violent
-local prevSpeed = 0
+local prevSpeed, prevVel, prevAhead = 0, nil, true -- vitesse (km/h), vecteur vitesse et sens de marche au tick précédent
 local function crashCheck(veh, ped)
   local S = Config.Seatbelt
   local kmh = GetEntitySpeed(veh) * 3.6
-  local before = prevSpeed
-  prevSpeed = kmh
+  local before, vel, ahead = prevSpeed, prevVel, prevAhead
+  prevSpeed, prevVel, prevAhead = kmh, GetEntityVelocity(veh), GetEntitySpeedVector(veh, true).y >= 0.0
   local c = GetVehicleClass(veh)
   if not (S and S.enabled) or c == 8 or (c >= 13 and c <= 16) or c == 21 then return end -- motos, vélos, bateaux, aériens, trains
-  if before < S.ejectSpeed or before - kmh < S.ejectDrop then return end
+  if before < S.ejectSpeed or before - kmh < S.ejectDrop or not vel then return end
+  -- Choc réel seulement : une chute de vitesse sans collision (réception de saut, téléportation, véhicule
+  -- arrêté par un script) n'éjecte pas. La collision de la frame courante compte aussi (boucle par frame pas encore passée)
+  if not HasEntityCollidedWithAnything(veh) and GetGameTimer() - lastHit > 300 then return end
   if belt then
     SetEntityHealth(ped, math.max(101, GetEntityHealth(ped) - S.beltDamage))
     return
   end
-  -- Éjection par le pare-brise, dans le sens de la marche : le ped est posé devant le capot (et non 1 m devant
-  -- son siège, ce qui le laissait dans la carrosserie), puis passe en ragdoll avant de recevoir sa vitesse
-  -- (une vitesse donnée avant le ragdoll est perdue)
-  local fwd = GetEntityForwardVector(veh)
-  local _, dmax = GetModelDimensions(GetEntityModel(veh))
-  local out = GetOffsetFromEntityInWorldCoords(veh, 0.0, dmax.y + 1.0, 0.6)
-  local vx, vy = fwd.x * before / 3.6 * 0.8, fwd.y * before / 3.6 * 0.8
+  -- Éjection dans le sens de la marche juste avant le choc : le ped est posé devant le capot (derrière le coffre
+  -- en marche arrière), hors de la carrosserie, et garde la direction réelle du véhicule, choc latéral compris.
+  -- Il passe en ragdoll avant de recevoir sa vitesse (une vitesse donnée avant le ragdoll est perdue)
+  local dmin, dmax = GetModelDimensions(GetEntityModel(veh))
+  local out = GetOffsetFromEntityInWorldCoords(veh, 0.0, ahead and dmax.y + 1.0 or dmin.y - 1.0, 0.6)
+  local vx, vy = vel.x * 0.8, vel.y * 0.8
   SetEntityCoords(ped, out.x, out.y, out.z, false, false, false, false)
   SetEntityHealth(ped, math.max(101, GetEntityHealth(ped) - S.ejectDamage))
   prevSpeed = 0
@@ -461,22 +460,18 @@ local function vehicleData(veh)
   local d = {
     cls = cls, speed = speed, rpm = GetVehicleCurrentRpm(veh),
     gear = speed < 1 and 'N' or (gear == 0 and 'R' or tostring(gear)),
-    fuel = fuelOf(veh), engine = math.max(0, GetVehicleEngineHealth(veh) / 10),
+    fuel = GetVehicleFuelLevel(veh), engine = math.max(0, GetVehicleEngineHealth(veh) / 10),
     belt = belt, lights = (high == 1) and 2 or ((on == 1) and 1 or 0),
     blink = blink, cruise = cruise, cruiseSpd = cruiseSpd, anchor = anchor,
   }
-  -- Compteur kilométrique : réel pour les véhicules possédés (vehicle_mileage), sinon compteur « d'occasion »
-  -- stable déduit de la plaque (même véhicule = même valeur) + distance parcourue depuis qu'on y est monté
-  if mileageRes then
-    local ok, km = pcall(function() return exports.vehicle_mileage:GetMileageKm(veh) end)
-    if ok and km then d.km = km end
-  end
-  -- Sans vehicle_mileage : compteur « d'occasion » déduit de la plaque seulement si Config.FakeOdometer
-  -- (sinon le HUD n'affiche que le trajet, au lieu d'un kilométrage inventé présenté comme réel)
-  if not d.km and cls ~= 'bike' and Config.FakeOdometer then
-    local plate, h = GetVehicleNumberPlateText(veh) or '', 0
-    for i = 1, #plate do h = (h * 31 + plate:byte(i)) % 1000003 end
-    d.km = 8000 + h % 152000 + trip
+  if cls ~= 'bike' then
+    local base = tonumber(Entity(veh).state.nh_km)
+    if base then odoShown = math.max(odoShown, base + odoPending); d.km = odoShown
+    elseif GetGameTimer() - odoAskedAt > 3000 and NetworkGetEntityIsNetworked(veh) then
+      -- Pas encore de compteur publié (siège pas encore vu par le serveur à l'entrée) : nouvelle demande
+      odoAskedAt = GetGameTimer()
+      TriggerServerEvent('nocturne_hud:odoRequest', VehToNet(veh))
+    end
   end
   -- Autonomie : consommation mesurée depuis l'entrée (ou le dernier plein)
   local fuel = d.fuel or 0
@@ -509,15 +504,38 @@ CreateThread(function()
     local ped = PlayerPedId()
     local veh = GetVehiclePedIsIn(ped, false)
     if veh ~= lastVeh then
-      if lastVeh ~= 0 then resetVeh(lastVeh) end
+      if lastVeh ~= 0 then
+        resetVeh(lastVeh)
+        if odoPending > 0.01 and DoesEntityExist(lastVeh) and NetworkGetEntityIsNetworked(lastVeh) then
+          TriggerServerEvent('nocturne_hud:odoAdd', VehToNet(lastVeh), odoPending)
+        end
+      end
       lastVeh = veh; prevSpeed = 0; trip, tripPos = 0.0, nil; fuelRef, fuelWarned = nil, false
+      odoPending, odoShown, odoSentAt = 0.0, 0.0, GetGameTimer()
       anchor = veh ~= 0 and anchoredVehicles[veh] == true or false
-      if veh ~= 0 then applyWindscreenFlag() end
+      if veh ~= 0 then
+        applyWindscreenFlag()
+        if NetworkGetEntityIsNetworked(veh) then
+          odoAskedAt = GetGameTimer()
+          TriggerServerEvent('nocturne_hud:odoRequest', VehToNet(veh))
+        end
+      end
     end
     if veh ~= 0 then
       local p = GetEntityCoords(veh)
-      if tripPos then local dd = #(p - tripPos); if dd < 60.0 then trip = trip + dd / 1000.0 end end -- au-delà : téléportation
+      if tripPos then
+        local dd = #(p - tripPos)
+        if dd < 60.0 then -- au-delà : téléportation
+          trip = trip + dd / 1000.0
+          if GetPedInVehicleSeat(veh, -1) == ped then odoPending = odoPending + dd / 1000.0 end
+        end
+      end
       tripPos = p
+      -- Distance conduite envoyée au serveur du HUD toutes les 10 s
+      if odoPending > 0.01 and GetGameTimer() - odoSentAt > 10000 and NetworkGetEntityIsNetworked(veh) then
+        TriggerServerEvent('nocturne_hud:odoAdd', VehToNet(veh), odoPending)
+        odoPending, odoSentAt = 0.0, GetGameTimer()
+      end
     end
     if veh ~= 0 then
       crashCheck(veh, ped)
@@ -553,7 +571,8 @@ CreateThread(function()
 
     -- Minimap : seulement quand l'état voulu par le HUD change, pour laisser les autres ressources la cacher
     -- (mode /cinema du serveur, menus, intérieurs…) au lieu de la réafficher à chaque mise à jour
-    local radar = not cinema and not externalHidden and not hideMap and (not (Config.MinimapOnlyInVehicle or mapVeh) or veh ~= 0)
+    radarWanted = not cinema and not externalHidden and not hideMap and (not (Config.MinimapOnlyInVehicle or mapVeh) or veh ~= 0)
+    local radar = radarWanted and not minimapReplaced
     if radar ~= lastRadar then DisplayRadar(radar); lastRadar = radar end
 
     -- Envoi à la page seulement si quelque chose a changé (au moins une fois par seconde pour l'heure et le clignotement)
@@ -578,8 +597,6 @@ end)
 local lastSlow = ''
 CreateThread(function()
   while true do
-    fuelRes = Config.FuelResource and GetResourceState(Config.FuelResource) == 'started' or false
-    mileageRes = GetResourceState('vehicle_mileage') == 'started'
     local coords = GetEntityCoords(PlayerPedId())
     local s1, s2 = GetStreetNameAtCoord(coords.x, coords.y, coords.z)
     local street = GetStreetNameFromHashKey(s1)
@@ -607,6 +624,7 @@ AddEventHandler('onResourceStop', function(res)
   if res ~= GetCurrentResourceName() then return end
   if editing then SetNuiFocus(false, false) end
   DisplayRadar(true)
+  if (Config.MinimapScale or 1.0) ~= 1.0 then setMinimapScale(1.0) end -- taille d'origine (appliquée au prochain rechargement de la minimap)
   local veh = GetVehiclePedIsIn(PlayerPedId(), false)
   resetVeh(lastVeh ~= 0 and lastVeh or veh)
   for boat in pairs(anchoredVehicles) do
@@ -618,123 +636,10 @@ AddEventHandler('onResourceStop', function(res)
   end
 end)
 
----------------------------------------------------------------- menu véhicule (ox_lib)
-local winDown = {}   -- [veh] = { [index] = true } : fenêtres baissées (le jeu n'expose pas cet état)
-local lightMode = {} -- [veh] = 0 auto, 1 éteints, 2 allumés
-
-local function vehNow()
-  local ped = PlayerPedId()
-  local veh = GetVehiclePedIsIn(ped, false)
-  if veh == 0 then return nil end
-  return veh, GetPedInVehicleSeat(veh, -1) == ped, ped
-end
-
-local openVehicleMenu
-local function back() SetTimeout(0, function() openVehicleMenu() end) end
-
-local function doorsMenu(veh)
-  local opts = {}
-  for i = 0, 5 do
-    if GetIsDoorValid(veh, i) and not IsVehicleDoorDamaged(veh, i) then
-      local open = GetVehicleDoorAngleRatio(veh, i) > 0.05
-      opts[#opts + 1] = { title = T.doors[i + 1], description = open and T.m_open or T.m_closed, icon = open and 'door-open' or 'door-closed',
-        onSelect = function()
-          if GetVehicleDoorAngleRatio(veh, i) > 0.05 then SetVehicleDoorShut(veh, i, false) else SetVehicleDoorOpen(veh, i, false, false) end
-          SetTimeout(350, function() doorsMenu(veh) end)
-        end }
-    end
-  end
-  opts[#opts + 1] = { title = T.m_all_open, icon = 'up-right-from-square', onSelect = function()
-    for i = 0, 5 do if GetIsDoorValid(veh, i) then SetVehicleDoorOpen(veh, i, false, false) end end
-    SetTimeout(350, function() doorsMenu(veh) end) end }
-  opts[#opts + 1] = { title = T.m_all_close, icon = 'lock', onSelect = function()
-    SetVehicleDoorsShut(veh, false); SetTimeout(350, function() doorsMenu(veh) end) end }
-  lib.registerContext({ id = 'nh_doors', title = T.m_doors, menu = 'nh_vehicle', options = opts })
-  lib.showContext('nh_doors')
-end
-
-local function windowsMenu(veh, driver, ped)
-  local opts, mine = {}, nil
-  for s = -1, 2 do if GetPedInVehicleSeat(veh, s) == ped then mine = s + 1 end end -- index de fenêtre du siège occupé
-  winDown[veh] = winDown[veh] or {}
-  for i = 0, 3 do
-    if driver or i == mine then
-      local down = winDown[veh][i]
-      opts[#opts + 1] = { title = T.doors[i + 1], description = down and T.m_down or T.m_up, icon = down and 'arrow-down' or 'arrow-up',
-        onSelect = function()
-          if winDown[veh][i] then RollUpWindow(veh, i); winDown[veh][i] = nil else RollDownWindow(veh, i); winDown[veh][i] = true end
-          windowsMenu(veh, driver, ped)
-        end }
-    end
-  end
-  lib.registerContext({ id = 'nh_windows', title = T.m_windows, menu = 'nh_vehicle', options = opts })
-  lib.showContext('nh_windows')
-end
-
-local function seatsMenu(veh, ped)
-  local opts = {}
-  local n = GetVehicleModelNumberOfSeats(GetEntityModel(veh))
-  for s = -1, n - 2 do
-    local occ = GetPedInVehicleSeat(veh, s)
-    local label = s == -1 and T.m_driver or (s == 0 and T.m_passenger or (T.m_back .. ' ' .. s))
-    opts[#opts + 1] = { title = label, description = occ == ped and '✓' or (occ == 0 and T.m_free or T.m_taken), icon = 'chair',
-      disabled = occ ~= 0,
-      onSelect = function()
-        if GetEntitySpeed(veh) * 3.6 > 5 then return lib.notify({ type = 'error', description = T.m_slow }) end
-        if IsVehicleSeatFree(veh, s) then SetPedIntoVehicle(ped, veh, s) end
-      end }
-  end
-  lib.registerContext({ id = 'nh_seats', title = T.m_seats, menu = 'nh_vehicle', options = opts })
-  lib.showContext('nh_seats')
-end
-
-openVehicleMenu = function()
-  local veh, driver, ped = vehNow()
-  if not veh or GetResourceState('ox_lib') ~= 'started' then return end
-  local engineOn = GetIsVehicleEngineRunning(veh)
-  local _, lon, lhigh = GetVehicleLightsState(veh)
-  local lm = lightMode[veh] or 0
-  local function needDriver(fn) return function() if not driver then return lib.notify({ type = 'error', description = T.m_only_driver }) end fn() end end
-  local opts = {
-    { title = T.m_engine, description = engineOn and T.m_on or T.m_off, icon = 'power-off', iconColor = engineOn and '#6fcf97' or '#e5676b', disabled = not driver,
-      onSelect = needDriver(function()
-        SetVehicleEngineOn(veh, not GetIsVehicleEngineRunning(veh), false, true) -- true : le moteur ne redémarre pas tout seul
-        back()
-      end) },
-    { title = T.m_lights, description = ({ [0] = T.m_lights_auto, T.m_lights_off, T.m_lights_on })[lm], icon = 'lightbulb',
-      iconColor = (lon == 1 or lhigh == 1) and '#e0c96a' or nil, disabled = not driver,
-      onSelect = needDriver(function()
-        lm = (lm + 1) % 3; lightMode[veh] = lm
-        SetVehicleLights(veh, lm) -- 0 normal, 1 éteints forcés, 2 allumés forcés
-        back()
-      end) },
-    { title = T.m_doors, icon = 'car-side', arrow = true, disabled = not driver, onSelect = needDriver(function() doorsMenu(veh) end) },
-    { title = T.m_windows, icon = 'wind', arrow = true, onSelect = function() windowsMenu(veh, driver, ped) end },
-    { title = T.m_radio, description = GetPlayerRadioStationName() and GetLabelText(GetPlayerRadioStationName()) or T.m_off, icon = 'radio',
-      onSelect = function()
-        local n = GetNumUnlockedRadioStations()
-        if n > 0 then SetVehicleRadioEnabled(veh, true); SetRadioToStationIndex((GetPlayerRadioStationIndex() + 1) % n) end
-        back()
-      end },
-    { title = T.m_radio_off, icon = 'volume-xmark', onSelect = function() SetVehRadioStation(veh, 'OFF'); back() end },
-    { title = T.m_seats, icon = 'chair', arrow = true, onSelect = function() seatsMenu(veh, ped) end },
-  }
-  lib.registerContext({ id = 'nh_vehicle', title = T.m_title, options = opts })
-  lib.showContext('nh_vehicle')
-end
-
-RegisterCommand('hud_vehmenu', function()
-  if lib and lib.getOpenContextMenu and lib.getOpenContextMenu() then return lib.hideContext(true) end
-  openVehicleMenu()
-end, false)
-RegisterKeyMapping('hud_vehmenu', T.vmenu, 'keyboard', Config.Keys.vehicleMenu or '')
-
 -- Nettoyage des états de véhicules disparus
 CreateThread(function()
   while true do
     Wait(60000)
-    for v in pairs(winDown) do if not DoesEntityExist(v) then winDown[v] = nil end end
-    for v in pairs(lightMode) do if not DoesEntityExist(v) then lightMode[v] = nil end end
     for v in pairs(anchoredVehicles) do if not DoesEntityExist(v) then anchoredVehicles[v] = nil end end
   end
 end)

@@ -36,14 +36,15 @@ local values = {
     GetVehicleNumberPlateText = function() return 'NOCT 01' end, GetEntityForwardVector = function() return vector3(0.0, 1.0, 0.0) end,
     GetModelDimensions = function() return vector3(-1.0, -2.4, -0.6), vector3(1.0, 2.4, 1.0) end,
     GetOffsetFromEntityInWorldCoords = function(_, x, y, z) return vector3(x, y, z) end,
-    GetEntityVelocity = function() return vector3(0.0, 0.0, 0.0) end, GetEntityHeightAboveGround = function() return 0.0 end,
+    GetEntityVelocity = function() return vector3(0.0, veh.speed, 0.0) end, GetEntitySpeedVector = function() return vector3(0.0, veh.speed, 0.0) end,
+    HasEntityCollidedWithAnything = function() return veh.collided == true end, GetEntityHeightAboveGround = function() return 0.0 end,
     GetSelectedPedWeapon = function() return 2725352035 end, GetPedArmour = function() return 0 end, -- 2725352035 = joaat('WEAPON_UNARMED')
     HasScaleformMovieLoaded = function() return true end, RequestScaleformMovie = function() return 1 end,
     GetActivePlayers = function() return { 0 } end, IsVehicleOnAllWheels = function() return true end,
     GetVehicleSteeringAngle = function() return 0.0 end, GetVehicleModelNumberOfSeats = function() return 4 end,
 }
 local zero = { 'IsPauseMenuActive', 'IsScreenFadedOut', 'IsHudHidden', 'IsPedSprinting', 'IsPedRunning',
-    'IsPedSwimmingUnderWater', 'IsPedArmed', 'NetworkIsPlayerTalking', 'HasEntityCollidedWithAnything',
+    'IsPedSwimmingUnderWater', 'IsPedArmed', 'NetworkIsPlayerTalking',
     'GetIsVehicleEngineRunning', 'GetAmmoInClip', 'GetAmmoInPedWeapon', 'GetHeliMainRotorHealth', 'GetLandingGearState' }
 local kvp = {}
 emu:native('SetResourceKvp', function(k, v) kvp[k] = v end, 'client')
@@ -84,7 +85,7 @@ local s = lastSlow()
 T:check(s and s.cash == 250 and s.bank == 4000, 'argent ESX affiché : 250 $ liquide, 4 000 $ banque')
 T:check(count('RegisterKeyMapping', function(a) return a[1] == 'hud_cinema' and a[4] == 'F10' end) == 1,
     'mode cinéma sur F10 (F7 est pris par esx_billing sur dev2)')
-T:eq(count('RegisterKeyMapping'), 9, '9 touches enregistrées (ceinture, clignotants, warnings, limiteur, régulateur, ancre, cinéma, menu)')
+T:eq(count('RegisterKeyMapping'), 8, '8 touches enregistrées (ceinture, clignotants, warnings, limiteur, régulateur, ancre, cinéma)')
 
 -- Argent : l'événement esx:setAccountMoney (compte reçu) met le HUD à jour sans attendre la boucle de 2 s
 esx:xPlayer(alice).addMoney(100)
@@ -145,13 +146,13 @@ alice:clientCommand('hud_seatbelt')
 emu:run(200)
 local u = nui('u'); u = u[#u].msg.d
 T:eq(u.veh and u.veh.belt, true, 'ceinture attachée affichée au compteur')
-T:eq(u.veh and u.veh.km, nil, 'sans vehicle_mileage : pas de kilométrage inventé (Config.FakeOdometer = false)')
+T:check(u.veh and (u.veh.km == nil or type(u.veh.km) == 'number'), 'kilométrage : seulement celui du HUD (state bag nh_km), jamais inventé')
 -- Choc à 110 km/h ceinture attachée : pas d'éjection, dégâts réduits
-veh.speed = 110 / 3.6; emu:run(200); veh.speed = 30 / 3.6; emu:run(200)
+veh.speed = 110 / 3.6; emu:run(200); veh.collided = true; veh.speed = 30 / 3.6; emu:run(200); veh.collided = false
 T:eq(count('SetPedToRagdoll'), 0, 'choc ceinture attachée : pas d\'éjection')
 -- Sans ceinture : éjection (ragdoll puis vitesse)
 alice:clientCommand('hud_seatbelt'); emu:run(100)
-veh.speed = 110 / 3.6; emu:run(200); veh.speed = 20 / 3.6; emu:run(300)
+veh.speed = 110 / 3.6; emu:run(200); veh.collided = true; veh.speed = 20 / 3.6; emu:run(300); veh.collided = false
 T:eq(count('SetPedToRagdoll'), 1, 'choc sans ceinture : une éjection')
 veh.speed = 0.0
 

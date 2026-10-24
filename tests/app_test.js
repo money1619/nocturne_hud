@@ -143,7 +143,7 @@ const SLOW = (o) => ({ id: 1, players: 1, maxPlayers: 4, cash: 0, bank: 0, job: 
     h.send({ t: 'u', d: { show: true, stats: {}, veh: VEH({ speed: 50, trip: 12.3 }) } });
     check('trajet en cours jamais affiché', h.node('odo').textContent === '');
     h.send({ t: 'u', d: { show: true, stats: {}, veh: VEH({ speed: 50, km: 48213 }) } });
-    check('kilométrage réel (vehicle_mileage) toujours affiché', /48\s?213 km/.test(String(h.node('odo').textContent).replace(/\u202f|\u00a0/g, ' ')));
+    check('kilométrage du HUD toujours affiché', /48\s?213 km/.test(String(h.node('odo').textContent).replace(/\u202f|\u00a0/g, ' ')));
   }
 
   // ---------- migration des réglages

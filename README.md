@@ -1,61 +1,170 @@
-# nocturne_hud — HUD joueur FiveM
+# Nocturne HUD — Custom FiveM HUD for GTA V Roleplay
 
-## Installation
-1. Copier le dossier `nocturne_hud` dans `resources/`.
-2. Ajouter `ensure nocturne_hud` dans `server.cfg` (après qb-core / es_extended et pma-voice).
-3. Désactiver l'ancien HUD (qb-hud, ps-hud, esx_hud…) pour éviter les doublons.
-4. Régler `config.lua` (framework, ressource carburant, slots).
+**Nocturne HUD** is a customizable FiveM HUD for GTA V roleplay servers, with support for QBCore, ESX and Standalone frameworks.
 
-### Objets d'inventaire
-Non applicable : nocturne_hud n'ajoute aucun objet à l'inventaire et n'utilise aucune table SQL (réglages des joueurs
-en KVP). Il n'y a donc pas de dossier `install/` à copier dans ox_inventory.
+> **French:** Nocturne HUD est un HUD FiveM personnalisable pour serveurs GTA V roleplay, compatible QBCore, ESX et Standalone.
 
-## Compatibilité
-- **QBCore** : argent, banque, emploi, faim, soif, stress (événements `hud:client:UpdateNeeds` / `UpdateStress` déjà gérés).
-- **ESX** : argent, banque, emploi, faim/soif via `esx_status`.
-- **Standalone** : exports `SetNeeds(h, t, s)`, `SetMoney(cash, bank)`, `SetJob(label)`.
-- **pma-voice** : portée de voix, parole, radio.
-- Carburant : natif, ou `Config.FuelResource = 'LegacyFuel'` (ou toute ressource avec `GetFuel`).
+[![GitHub release](https://img.shields.io/github/release/money1619/nocturne_hud.svg)](https://github.com/money1619/nocturne_hud/releases)
+[![License: Proprietary](https://img.shields.io/badge/License-Modif%20OK%20%C2%B7%20No%20resale-lightgrey.svg)](LICENSE)
+[![FiveM](https://img.shields.io/badge/FiveM-HUD-blue.svg)](https://github.com/money1619/nocturne_hud)
 
-## Joueur
-- `/hudsetting` : déplacer chaque élément (chaque statut séparément), taille 50–200 %, afficher/masquer, style, disposition, unité, mode streamer. Échap pour fermer. Sauvegardé sur le PC du joueur.
-- Touches (modifiables dans Paramètres › Raccourcis › FiveM) : B ceinture · ← → clignotants · ↓ warnings · L limiteur · J régulateur. Phares (H) et train d'atterrissage restent natifs, le HUD les affiche.
-- `/ancre` (ou la touche « HUD · Ancre », `Config.Keys.anchor`) : jeter / lever l'ancre d'un bateau.
-- Le régulateur se coupe au freinage ou en cas de choc. Sans ceinture, un choc violent (≥ `Config.Seatbelt.ejectSpeed` km/h) éjecte par le pare-brise et blesse ; attachée, elle limite les blessures et empêche de sortir.
+---
 
-## Test hors jeu
-Ouvrir `html/index.html` dans un navigateur : données de démo, double-clic pour les réglages.
+## 📑 Sommaire / Table of Contents
 
-## Nouveautés 1.7
-- Mode cinéma sur **F10** par défaut (F7 est pris par esx_billing sur dev2).
-- Export `toggleHud(afficher)` au même contrat que jg-hud : jg-mechanic l'utilise (voir `integration/`).
-- Réglages et profils gardés en **KVP** (stockage FiveM du joueur), repris automatiquement depuis l'ancienne copie du navigateur.
-- Kilométrage : réel avec `vehicle_mileage`, sinon rien n'est affiché (`Config.FakeOdometer = true` pour l'ancien compteur déduit de la plaque). Le trajet en cours n'est plus affiché.
-- Le HUD n'envoie à la page que ce qui a changé (au moins une fois par seconde).
-- Polices Inter et Sora incluses (`html/fonts`, licence OFL) : plus de chargement depuis Google.
-- Sons de ceinture : clic à l'attache, bip au-dessus de 20 km/h sans ceinture (`Config.Seatbelt.sounds`).
+- [Features / Fonctionnalités](#features--fonctionnalités)
+- [Supported Frameworks / Frameworks supportés](#supported-frameworks--frameworks-supportés)
+- [Installation](#installation)
+- [Configuration](#configuration)
+- [Commands / Commandes](#commands--commandes)
+- [Exports](#exports-client)
+- [Screenshots / Captures d'écran](#screenshots--captures-écran)
+- [Compatibility / Compatibilité](#compatibility--compatibilité)
+- [License / Licence](#license--licence)
 
-## Notes
-- La minimap native reste à sa place : elle se masque depuis /hudsetting mais ne se déplace pas.
-- Langue : `Config.Locale = 'fr'` ou `'en'`.
+---
 
-## Exports (client)
-| Export | Rôle |
-|---|---|
-| `exports.nocturne_hud:SetNeeds(faim, soif, stress)` | Statuts 0–100 (framework sans esx_status / qb) ; `nil` garde la valeur actuelle |
-| `exports.nocturne_hud:SetMoney(liquide, banque)` | Argent affiché (standalone ou économie custom) |
-| `exports.nocturne_hud:SetJob(libellé)` | Emploi affiché |
-| `exports.nocturne_hud:IsSeatbeltOn()` | `true` si la ceinture est attachée |
-| `exports.nocturne_hud:toggleHud(afficher)` | `false` cache HUD et minimap, `true` les rend (contrat jg-hud) |
-| `exports.nocturne_hud:Notify(data)` | Notification au style du HUD (`title`, `description`, `type`, `duration`) ; `false` si rien à afficher |
+## 🚀 Features / Fonctionnalités
 
-Exemple : `exports.nocturne_hud:SetNeeds(80, 65, nil)`
+- Player status: health, armor, hunger, thirst, stress
+- Money display: cash and bank
+- Job information with label
+- Voice indicators: range, talking, radio (pma-voice)
+- Vehicle information: speedometer, seatbelt, indicators, hazards, limiter, cruise control, engine, lights, doors, windows, radio, seats
+- Customizable HUD layout: move, resize (50–200 %), show/hide each element, streamer mode
+- Player settings saved locally (KVP)
+- Seatbelt: ejection on violent crash without belt, reduced injuries with belt
+- Cinema mode (F10): hides all HUD + black bars
+- Fuel warning and estimated range
+- Built-in odometer: kilometres per plate kept by the HUD itself (`data/odometer.json`), no other resource
+- Notifications at HUD style via exports
+- Minimap native control: hide bars, scale, offset
+- No SQL tables, no inventory objects, player settings in KVP, odometer in a JSON file
+- Lightweight: sends only changed data to the NUI page (at least once per second)
+- Fonts Inter and Sora included locally (no Google Fonts dependency)
+- Multilingual: French (`fr`) and English (`en`)
 
-## Joueurs connectés
-Le serveur publie le nombre réel de joueurs et les slots (`sv_maxclients`) ; `Config.MaxPlayers` ne sert qu'en secours.
+> **Français:** Statuts joueur (vie, armure, faim, soif, stress), argent liquide et banque, emploi, indicateurs de voix (pma-voice), compteur de vitesse, ceinture, clignotants, warnings, régulateur, limiteur, HUD personnalisable (position, taille, affichage/masque, mode streamer), réglages sauvegardés en KVP, éjection par pare-brise sans ceinture, mode cinéma F10, carburant avec autonomie estimée, compteur kilométrique intégré (par plaque, sans autre ressource), notifications style HUD, minimap native configurable, pas de base de données, polices incluses localement, multilingue fr/en.
 
-## Licence
-Code sous licence [Creative Commons BY-NC-SA 4.0](https://creativecommons.org/licenses/by-nc-sa/4.0/deed.fr) (fichier `LICENSE`) :
-utilisation et modification libres sur votre serveur, en citant l'auteur ; **revente et tout usage commercial interdits**
-(y compris sur Tebex) ; les versions modifiées partagées restent sous la même licence.
-Les polices Inter et Sora (`html/fonts`) gardent leur propre licence SIL OFL 1.1 (`html/fonts/OFL-*.txt`).
+---
+
+## 🛠 Supported Frameworks / Frameworks supportés
+
+| Framework | Details |
+|-----------|---------|
+| **QBCore** | Money, bank, job, hunger, thirst, stress (events `hud:client:UpdateNeeds` / `UpdateStress`) |
+| **ESX** (Legacy) | Money, bank, job, hunger/thirst via `esx_status` |
+| **Standalone** | Exports `SetNeeds(h, t, s)`, `SetMoney(cash, bank)`, `SetJob(label)` |
+| **pma-voice** | Voice range, talking, radio indicators |
+| **Fuel** | Native GTA fuel level of the vehicle (LegacyFuel, ox_fuel, cdn-fuel… keep it up to date; no export called) |
+
+---
+
+## 📦 Installation
+
+1. Copy the `nocturne_hud` folder into your `resources/` directory.
+2. Add `ensure nocturne_hud` to your `server.cfg` (after qb-core / es_extended and pma-voice).
+3. Disable your old HUD (qb-hud, ps-hud, esx_hud…) to avoid duplicates.
+4. Configure `config.lua` (framework, slots).
+
+> **Français:**
+> 1. Copier le dossier `nocturne_hud` dans `resources/`.
+> 2. Ajouter `ensure nocturne_hud` dans `server.cfg` (après qb-core / es_extended et pma-voice).
+> 3. Désactiver l'ancien HUD (qb-hud, ps-hud, esx_hud…) pour éviter les doublons.
+> 4. Régler `config.lua` (framework, ressource carburant, slots).
+
+### Inventory objects / Objets d'inventaire
+
+Nocturne HUD adds no inventory objects and uses no SQL tables (player settings in KVP). There is no `install/` folder to copy into ox_inventory.
+
+---
+
+## ⚙️ Configuration
+
+Edit `config.lua`:
+
+```lua
+Config.Framework = 'auto'    -- 'auto', 'qb', 'esx' or 'standalone'
+Config.Locale = 'fr'         -- 'fr' or 'en'
+Config.MaxPlayers = 128      -- fallback only
+Config.SettingsCommand = 'hudsetting'
+```
+
+See `config.lua` for all options: seatbelt, voice circle, notifications, fuel, odometer, minimap, native HUD elements to hide.
+
+---
+
+## ⌨️ Commands / Commandes
+
+| Command | Description |
+|---------|-------------|
+| `/hudsetting` | Open HUD customization menu (move, resize, show/hide elements) |
+| `/ancre` | Drop / lift boat anchor |
+| `Esc` | Close settings menu |
+
+**Default keys** (changeable in FiveM Settings > Keybinds):
+- `B` — Seatbelt
+- `LEFT` / `RIGHT` — Indicators
+- `DOWN` — Hazard lights
+- `L` — Speed limiter
+- `J` — Cruise control
+- `F10` — Cinema mode
+
+---
+
+## 🔌 Exports (client)
+
+| Export | Role |
+|--------|------|
+| `SetNeeds(faim, soif, stress)` | Status 0–100 (standalone); `nil` keeps current value |
+| `SetMoney(liquide, banque)` | Money displayed (standalone or custom economy) |
+| `SetJob(libellé)` | Job displayed |
+| `IsSeatbeltOn()` | `true` if seatbelt is fastened |
+| `toggleHud(afficher)` | `false` hides HUD and minimap, `true` shows them (jg-hud contract) |
+| `setMinimapReplaced(actif)` | `true` keeps the native minimap hidden: another resource draws its own in its place |
+| `isMinimapWanted()` | `true` if the HUD wants a minimap shown (player settings, cinema mode, `toggleHud`) |
+| `getMinimapAnchor()` | Native minimap rectangle `{ x, y, w, h }` (screen fractions) |
+| `Notify(data)` | HUD-style notification (`title`, `description`, `type`, `duration`) |
+
+Example: `exports.nocturne_hud:SetNeeds(80, 65, nil)`
+
+---
+
+## 🖼 Screenshots / Captures d'écran
+
+Add in-game screenshots here to show the HUD layout:
+
+- Player status panel
+- Speedometer and vehicle info
+- Customization menu (`/hudsetting`)
+
+> **Note:** Add screenshots to `docs/screenshots/` or link them from the GitHub Pages site. Players need to see what the HUD looks like before installing.
+
+---
+
+## ✅ Compatibility / Compatibilité
+
+- Native minimap remains in place; can be hidden via `/hudsetting` but not moved
+- Language: `Config.Locale = 'fr'` or `'en'`
+- No dependency (ox_lib is no longer required since the vehicle menu was removed)
+- Tested with ESX Legacy 1.15.2, ox_lib 3.40.3, oxmysql 2.14.3, ox_inventory, ox_target, txAdmin
+
+---
+
+## 📄 License / Licence
+
+Copyright © 2026 AEOM Development (`LICENSE`): you may modify it and share modified versions for free, **as long as AEOM Development is credited as the original creator**; **selling or reselling it (Tebex or anywhere else) is prohibited**.
+© 2026 AEOM Development : modification permise en créditant AEOM Development comme créateur original, revente interdite (Tebex ou ailleurs). Voir `LICENSE`.
+Fonts Inter and Sora (`html/fonts`) keep their own SIL OFL 1.1 license (`html/fonts/OFL-*.txt`).
+
+---
+
+## 🔗 Links
+
+- **Repository:** https://github.com/money1619/nocturne_hud
+- **Issues:** https://github.com/money1619/nocturne_hud/issues
+- **Releases:** https://github.com/money1619/nocturne_hud/releases
+
+---
+
+*Nocturne HUD — Free custom FiveM HUD for GTA V roleplay servers. QBCore • ESX • Standalone • pma-voice • Lua*

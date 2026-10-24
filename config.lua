@@ -6,9 +6,7 @@ Config.Framework = 'auto'
 -- Langue : 'fr' ou 'en' (HUD, réglages et noms des touches)
 Config.Locale = 'fr'
 
--- Ressource de carburant (exports[x]:GetFuel(veh)). nil = carburant natif GTA.
--- Exemples : 'LegacyFuel', 'ps-fuel', 'cdn-fuel', 'ox_fuel' (ox_fuel utilise l'état natif → laisser nil)
-Config.FuelResource = nil
+-- Carburant : niveau natif GTA du véhicule (LegacyFuel, ox_fuel, cdn-fuel… le tiennent à jour ; aucun export appelé)
 
 Config.MaxPlayers = 128                -- secours seulement : les slots réels (sv_maxclients) sont lus par le serveur
 Config.MinimapOnlyInVehicle = false   -- force la minimap seulement en véhicule pour tous (sinon chaque joueur choisit dans /hudsetting)
@@ -31,7 +29,6 @@ Config.Keys = {
   cruise = 'J',
   anchor = '',          -- ancre du bateau (vide = pas de touche par défaut, commande /ancre)
   cinema = 'F10',       -- mode cinématique : cache tout le HUD + bandes noires (F7 est pris par esx_billing sur dev2)
-  vehicleMenu = 'F9',   -- menu véhicule : moteur, phares, portes, fenêtres, radio, sièges
 }
 
 -- Ceinture : sans ceinture, un choc violent éjecte par le pare-brise ; attachée, elle réduit les blessures
@@ -62,8 +59,6 @@ Config.Notifications = {
 -- Carburant : bip et pulsation sous ce seuil (%), autonomie estimée affichée sous showRange (%)
 Config.Fuel = { warn = 10, showRange = 25 }
 
--- Compteur kilométrique : réel avec la ressource vehicle_mileage. Sans elle, true affiche un compteur « d'occasion »
--- déduit de la plaque (inventé) ; false n'affiche rien.
-Config.FakeOdometer = false
+-- Compteur kilométrique : tenu par le HUD lui-même, par plaque, dans data/odometer.json (aucune autre ressource)
 
 Config.HideNative = { 3, 4, 6, 7, 8, 9 } -- argent, nom véhicule, zone, classe, rue

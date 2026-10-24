@@ -1,13 +1,13 @@
 fx_version 'cerulean'
 game 'gta5'
+author 'AEOM Development'
 lua54 'yes'
-dependency 'ox_lib'
 
 name 'nocturne_hud'
-description 'HUD joueur Nocturne — statuts, argent, voix, véhicule (voiture, moto, vélo, bateau, hélico, avion)'
-version '1.7.1'
+description 'Nocturne HUD — Custom FiveM HUD for GTA V Roleplay. Supports QBCore, ESX and Standalone. Player status, money, job, voice, speedometer, seatbelt, vehicle info. Lua, no dependency.'
+version '1.8.0'
 
-shared_scripts { '@ox_lib/init.lua', 'config.lua' }
+shared_script 'config.lua'
 client_script 'client/main.lua'
 server_script 'server/main.lua'
 

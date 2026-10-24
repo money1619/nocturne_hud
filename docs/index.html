@@ -1,42 +1,121 @@
-<!doctype html>
-<html lang="en">
+<!DOCTYPE html>
+<html lang="fr">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="google-site-verification" content="U8lhkz4eGPi38x9gwBY6O3d6TojdXmYCb5hM5dS5BNk">
-  <meta name="description" content="Nocturne HUD is a customizable FiveM HUD for GTA V roleplay, with QBCore, ESX and standalone support.">
-  <meta name="theme-color" content="#11131d">
-  <title>Nocturne HUD — FiveM HUD for GTA V RP</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Nocturne HUD — Custom FiveM HUD for GTA V Roleplay</title>
+
+  <meta name="description" content="Nocturne HUD is a free customizable FiveM HUD for GTA V roleplay servers. Supports QBCore, ESX and Standalone. Player status, money, job, voice indicators, speedometer, seatbelt, vehicle info. Open source on GitHub.">
+  <meta name="keywords" content="FiveM HUD, fivem hud, gta v hud, gta5 hud, qbcore hud, esx hud, custom hud fivem, fiveM custom hud, gta roleplay hud, fivem status hud, fivem speedometer, fivem voice hud, nocturne hud, fivem lua, fivem resource, gta v roleplay">
+
+  <meta name="author" content="money1619">
+  <meta name="robots" content="index, follow">
+
+  <link rel="canonical" href="https://money1619.github.io/nocturne_hud/">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E🌙%3C/text%3E%3C/svg%3E">
+
+  <meta property="og:title" content="Nocturne HUD — Custom FiveM HUD for GTA V Roleplay">
+  <meta property="og:description" content="Free customizable FiveM HUD for GTA V roleplay servers. QBCore, ESX, Standalone support.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://money1619.github.io/nocturne_hud/">
+  <meta property="og:site_name" content="Nocturne HUD">
+
+  <meta property="twitter:card" content="summary">
+  <meta property="twitter:title" content="Nocturne HUD — Custom FiveM HUD for GTA V Roleplay">
+  <meta property="twitter:description" content="Free customizable FiveM HUD for GTA V roleplay servers. QBCore, ESX, Standalone support.">
+
   <style>
-    :root{color-scheme:dark;--bg:#0b0d14;--panel:#141827;--line:#292f43;--text:#f4f5ff;--muted:#a5abc0;--accent:#a58bff;--cyan:#69d8ff}
-    *{box-sizing:border-box}body{margin:0;background:radial-gradient(ellipse at 80% 0%,#242143 0,transparent 42%),var(--bg);color:var(--text);font:16px/1.6 Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif}
-    main{width:min(100% - 36px,1000px);margin:0 auto;padding:72px 0}.brand{display:inline-flex;align-items:center;gap:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;font-size:.82rem;color:#d3caff}.mark{width:13px;height:13px;border-radius:4px;background:linear-gradient(135deg,var(--cyan),var(--accent));box-shadow:0 0 24px #a58bff77}
-    .hero{padding:78px 0 60px}.eyebrow{color:var(--cyan);font-size:.78rem;font-weight:700;letter-spacing:.18em;text-transform:uppercase}h1{font-size:clamp(2.7rem,8vw,5.4rem);line-height:1.04;letter-spacing:-.055em;margin:18px 0 22px}.hero p{max-width:690px;color:var(--muted);font-size:1.15rem}
-    .actions{display:flex;gap:12px;flex-wrap:wrap;margin-top:30px}.button{display:inline-flex;padding:11px 17px;border:1px solid var(--line);border-radius:10px;color:var(--text);text-decoration:none;font-weight:650}.button.primary{background:linear-gradient(110deg,#8c74f2,#6bb8ff);border:0;color:#10111b}
-    .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:14px;margin:16px 0 52px}.card{background:linear-gradient(150deg,#171b2c,#111420);border:1px solid var(--line);border-radius:14px;padding:22px}.card h2{font-size:1rem;margin:0 0 8px}.card p{color:var(--muted);font-size:.92rem;margin:0}.section-title{font-size:1.1rem;margin:0 0 14px}footer{border-top:1px solid var(--line);padding-top:22px;color:var(--muted);font-size:.85rem}
-    @media(max-width:600px){main{padding-top:34px}.hero{padding:58px 0 38px}}
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; line-height: 1.6; color: #1a1a2e; background: #f4f4f5; }
+    .container { max-width: 800px; margin: 0 auto; padding: 40px 20px; }
+    header { background: #1a1a2e; color: #fff; padding: 40px 20px; border-radius: 12px; margin-bottom: 30px; }
+    h1 { font-size: 2.2rem; margin-bottom: 12px; }
+    h2 { font-size: 1.5rem; margin-top: 30px; margin-bottom: 12px; color: #1a1a2e; border-bottom: 2px solid #1a1a2e; padding-bottom: 6px; }
+    p { margin-bottom: 16px; color: #333; }
+    .badge { display: inline-block; background: #e2e8f0; color: #334155; padding: 4px 10px; border-radius: 6px; font-size: 0.85rem; margin-right: 8px; margin-bottom: 8px; }
+    .frameworks { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 24px; }
+    .framework { background: #1a1a2e; color: #fff; padding: 6px 14px; border-radius: 6px; font-size: 0.9rem; }
+    a { color: #2563eb; text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    .btn { display: inline-block; background: #2563eb; color: #fff; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: 600; margin-top: 12px; }
+    .btn:hover { background: #1d4ed8; }
+    ul { margin-bottom: 16px; padding-left: 22px; }
+    li { margin-bottom: 8px; color: #333; }
+    .lang { margin-top: 24px; padding-top: 24px; border-top: 1px solid #cbd5e1; font-size: 0.9rem; color: #64748b; }
+    .lang a { margin-right: 16px; }
+    .screenshot-placeholder { background: #e2e8f0; border: 2px dashed #94a3b8; border-radius: 8px; height: 200px; display: flex; align-items: center; justify-content: center; color: #64748b; margin: 20px 0; font-size: 0.95rem; }
+    footer { margin-top: 40px; padding-top: 24px; border-top: 1px solid #cbd5e1; color: #64748b; font-size: 0.85rem; }
   </style>
 </head>
 <body>
-  <main>
-    <div class="brand"><span class="mark"></span>Nocturne HUD</div>
-    <section class="hero">
-      <div class="eyebrow">FiveM · GTA V roleplay</div>
-      <h1>A clearer view<br>of your city.</h1>
-      <p>A customizable player HUD made for FiveM roleplay servers. Nocturne HUD supports QBCore, ESX and standalone setups, with a clean interface for the information players use every day.</p>
-      <div class="actions">
-        <a class="button primary" href="https://github.com/money1619/nocturne_hud">View the project on GitHub</a>
-        <a class="button" href="https://github.com/money1619/nocturne_hud#readme">Read the documentation</a>
+  <div class="container">
+    <header>
+      <h1>Nocturne HUD</h1>
+      <p>Free customizable FiveM HUD for GTA V roleplay servers — QBCore, ESX, Standalone.</p>
+      <div class="frameworks">
+        <span class="framework">QBCore</span>
+        <span class="framework">ESX</span>
+        <span class="framework">Standalone</span>
+        <span class="framework">pma-voice</span>
+        <span class="framework">Lua</span>
       </div>
+      <a href="https://github.com/money1619/nocturne_hud" class="btn">View on GitHub</a>
+      <a href="https://github.com/money1619/nocturne_hud/releases" class="btn" style="margin-left:12px;background:#64748b;">Download</a>
+    </header>
+
+    <section>
+      <h2>Features / Fonctionnalités</h2>
+      <ul>
+        <li>Player status: health, armor, hunger, thirst, stress</li>
+        <li>Money display: cash and bank</li>
+        <li>Job information with label</li>
+        <li>Voice indicators: range, talking, radio (pma-voice)</li>
+        <li>Vehicle info: speedometer, seatbelt, indicators, hazards, limiter, cruise control</li>
+        <li>Customizable HUD layout: move, resize, show/hide each element, streamer mode</li>
+        <li>Settings saved locally (KVP)</li>
+        <li>Seatbelt: ejection on violent crash, reduced injuries with belt</li>
+        <li>Cinema mode (F10)</li>
+        <li>Fuel warning and estimated range</li>
+        <li>Real or fake odometer</li>
+        <li>Multilingual: French and English</li>
+      </ul>
     </section>
-    <h2 class="section-title">Designed for roleplay</h2>
-    <section class="grid" aria-label="Features">
-      <article class="card"><h2>Customizable interface</h2><p>Adapt the HUD presentation to the look and needs of your server.</p></article>
-      <article class="card"><h2>Vehicle speedometer</h2><p>Keep vehicle speed information close at hand while driving.</p></article>
-      <article class="card"><h2>Voice indicators</h2><p>Make player voice activity and communication status easier to read.</p></article>
-      <article class="card"><h2>Player status</h2><p>Display essential player status information in one place.</p></article>
+
+    <section>
+      <h2>Installation</h2>
+      <ol>
+        <li>Copy the <code>nocturne_hud</code> folder into your <code>resources/</code> directory.</li>
+        <li>Add <code>ensure nocturne_hud</code> to your <code>server.cfg</code>.</li>
+        <li>Disable your old HUD (qb-hud, ps-hud, esx_hud…) to avoid duplicates.</li>
+        <li>Configure <code>config.lua</code>.</li>
+      </ol>
     </section>
-    <footer>Open-source FiveM HUD by <a href="https://github.com/money1619" style="color:#cfc4ff">money1619</a>. Framework support: QBCore, ESX and standalone.</footer>
-  </main>
+
+    <section>
+      <h2>Screenshots / Captures d'écran</h2>
+      <div class="screenshot-placeholder">Add in-game screenshots here</div>
+      <p>Screenshots help players understand what the HUD looks like before installing.</p>
+    </section>
+
+    <section>
+      <h2>Links</h2>
+      <ul>
+        <li><a href="https://github.com/money1619/nocturne_hud">GitHub Repository</a></li>
+        <li><a href="https://github.com/money1619/nocturne_hud/issues">Issues & Support</a></li>
+        <li><a href="https://github.com/money1619/nocturne_hud/releases">Releases</a></li>
+      </ul>
+    </section>
+
+    <div class="lang">
+      <strong>Langue / Language:</strong>
+      <a href="https://github.com/money1619/nocturne_hud#readme">English</a> |
+      <a href="https://github.com/money1619/nocturne_hud#readme">Français</a>
+    </div>
+
+    <footer>
+      &copy; 2026 AEOM Development — Nocturne HUD. All rights reserved (proprietary license).<br>
+      Not affiliated with Rockstar Games, Cfx.re, QBCore, or ESX.
+    </footer>
+  </div>
 </body>
 </html>
