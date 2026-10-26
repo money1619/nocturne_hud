@@ -41,7 +41,6 @@ Config.Seatbelt = {
   sounds = true,        -- clic à l'attache, bip au-dessus de 20 km/h sans ceinture (voitures)
 }
 
--- Masquer les éléments natifs GTA remplacés par le HUD
 -- Cercle au sol montrant la portée de la voix quand le joueur la change (pma-voice)
 Config.VoiceCircle = {
   enabled = true,
@@ -61,4 +60,5 @@ Config.Fuel = { warn = 10, showRange = 25 }
 
 -- Compteur kilométrique : tenu par le HUD lui-même, par plaque, dans data/odometer.json (aucune autre ressource)
 
-Config.HideNative = { 3, 4, 6, 7, 8, 9 } -- argent, nom véhicule, zone, classe, rue
+-- Masquer les éléments natifs GTA remplacés par le HUD
+Config.HideNative ={ 3, 4, 6, 7, 8, 9 } -- argent, nom véhicule, zone, classe, rue
