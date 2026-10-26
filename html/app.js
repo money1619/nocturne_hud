@@ -1,7 +1,7 @@
 (() => {
 const KEY = 'nocturne_hud_cfg_v1';
 // ---------- langue (Config.Locale, envoyée par le client) : le français est la langue source
-const EN = {"Vie": "Health", "Armure": "Armor", "Faim": "Hunger", "Soif": "Thirst", "Endurance": "Stamina", "Oxygène": "Oxygen", "Toxicité": "Toxicity", "Alcool": "Alcohol", "Voix": "Voice", "Heure": "Time", "Argent liquide": "Cash", "Banque": "Bank", "Emploi": "Job", "Arme": "Weapon", "munitions": "ammo", "Rue": "Street", "boussole": "compass", "Compteur véhicule": "Speedometer", "Accent général": "Main accent", "Cadre minimap": "Minimap frame", "Compteur": "Speedometer", "Argent": "Cash", "Général": "General", "Couleurs": "Colors", "Éléments": "Elements", "Élément": "Element", "clique aussi directement sur le HUD": "or click it on the HUD", "Couleur": "Color", "Couleur libre": "Custom color", "Par défaut": "Default", "Appliquer aux statuts": "Apply to statuses", "Tout réinitialiser": "Reset all", "Les alertes (vie basse, carburant…) restent en rouge.": "Alerts (low health, fuel…) stay red.", "Taille": "Size", "Appliquer à tout": "Apply to all", "Tailles par défaut": "Default sizes", "Clique un élément du HUD pour le sélectionner.": "Click a HUD element to select it.", "Éléments affichés": "Shown elements", "Toujours": "Always", "En véhicule seulement": "In vehicle only", "Style des statuts": "Status style", "Anneaux": "Rings", "Barres": "Bars", "Disposition des statuts": "Status layout", "En ligne": "Row", "Empilés": "Stacked", "Vitesse": "Speed", "Argent et banque": "Cash and bank", "Discret au repos": "Subtle when idle", "Toujours visible": "Always visible", "Discret : l’argent s’estompe et revient en plein quand il change.": "Subtle: money fades out and comes back when it changes.", "Cadre autour de la minimap": "Frame around the minimap", "Afficher les statuts seulement si utile": "Show statuses only when useful", "Icônes monochromes": "Monochrome icons", "Mode streamer (masque ID, argent, emploi)": "Streamer mode (hides ID, money, job)", "ARME": "WEAPON", "Carburant": "Fuel", "Glisse chaque élément où tu veux": "Drag any element anywhere", "clique pour le sélectionner": "click to select it", "Réglages du HUD": "HUD settings", "Enregistré automatiquement": "Saved automatically", "Changer de côté": "Switch side", "Réduire": "Minimize", "Réinitialiser positions": "Reset positions", "Fermer": "Close", "NŒUDS": "KNOTS", "ANCRE JETÉE": "ANCHORED", "DÉCROCHAGE": "STALL", "TRAIN SORTI": "GEAR DOWN", "TRAIN RENTRÉ": "GEAR UP", "VÉLO": "BIKE", "BATEAU": "BOAT", "HÉLICO": "HELI", "AVION": "PLANE", "Emploi masqué": "Job hidden", "RÉG": "CRU", "Atténuer le HUD la nuit (heure du jeu)": "Dim the HUD at night (game time)", "Profils": "Profiles", "Charger": "Load", "Enregistrer": "Save", "Course": "Racing", "RP calme": "Chill RP", "Streamer": "Streamer", "vide": "empty", "Thèmes": "Themes", "Profil enregistré": "Profile saved", "SO": "SW", "O": "W", "NO": "NW"};
+const EN = {"Vie": "Health", "Armure": "Armor", "Faim": "Hunger", "Soif": "Thirst", "Endurance": "Stamina", "Oxygène": "Oxygen", "Toxicité": "Toxicity", "Alcool": "Alcohol", "Voix": "Voice", "Heure": "Time", "Argent liquide": "Cash", "Banque": "Bank", "Emploi": "Job", "Arme": "Weapon", "munitions": "ammo", "Rue": "Street", "boussole": "compass", "Compteur véhicule": "Speedometer", "Accent général": "Main accent", "Cadre minimap": "Minimap frame", "Compteur": "Speedometer", "Argent": "Cash", "Général": "General", "Couleurs": "Colors", "Éléments": "Elements", "Élément": "Element", "clique aussi directement sur le HUD": "or click it on the HUD", "Couleur": "Color", "Couleur libre": "Custom color", "Par défaut": "Default", "Appliquer aux statuts": "Apply to statuses", "Tout réinitialiser": "Reset all", "Les alertes (vie basse, carburant…) restent en rouge.": "Alerts (low health, fuel…) stay red.", "Taille": "Size", "Appliquer à tout": "Apply to all", "Tailles par défaut": "Default sizes", "Clique un élément du HUD pour le sélectionner.": "Click a HUD element to select it.", "Éléments affichés": "Shown elements", "Toujours": "Always", "En véhicule seulement": "In vehicle only", "Style des statuts": "Status style", "Anneaux": "Rings", "Barres": "Bars", "Disposition des statuts": "Status layout", "En ligne": "Row", "Empilés": "Stacked", "Vitesse": "Speed", "Argent et banque": "Cash and bank", "Discret au repos": "Subtle when idle", "Toujours visible": "Always visible", "Discret : l’argent s’estompe et revient en plein quand il change.": "Subtle: money fades out and comes back when it changes.", "Cadre autour de la minimap": "Frame around the minimap", "Afficher les statuts seulement si utile": "Show statuses only when useful", "Icônes monochromes": "Monochrome icons", "Mode streamer (masque ID, argent, emploi)": "Streamer mode (hides ID, money, job)", "ARME": "WEAPON", "Carburant": "Fuel", "Glisse chaque élément où tu veux": "Drag any element anywhere", "clique pour le sélectionner": "click to select it", "Réglages du HUD": "HUD settings", "Enregistré automatiquement": "Saved automatically", "Changer de côté": "Switch side", "Réduire": "Minimize", "Réinitialiser positions": "Reset positions", "Fermer": "Close", "NŒUDS": "KNOTS", "ANCRE JETÉE": "ANCHORED", "DÉCROCHAGE": "STALL", "TRAIN SORTI": "GEAR DOWN", "TRAIN RENTRÉ": "GEAR UP", "VÉLO": "BIKE", "BATEAU": "BOAT", "HÉLICO": "HELI", "AVION": "PLANE", "Emploi masqué": "Job hidden", "RÉG": "CRU", "Atténuer le HUD la nuit (heure du jeu)": "Dim the HUD at night (game time)", "Profils": "Profiles", "Charger": "Load", "Enregistrer": "Save", "Course": "Racing", "RP calme": "Chill RP", "Streamer": "Streamer", "vide": "empty", "Thèmes": "Themes", "Profil enregistré": "Profile saved", "SO": "SW", "O": "W", "NO": "NW", "Style": "Style", "Thème": "Theme", "En véhicule": "In vehicle", "Discret": "Subtle", "Afficher": "Show", "Masquer": "Hide", "Glisse les éléments sur l’écran ; clique-en un pour le régler ici.": "Drag elements on screen; click one to adjust it here.", "Un profil garde tous tes réglages (style, couleurs, positions). Enregistre l’état actuel, recharge-le quand tu veux.": "A profile keeps all your settings (style, colors, positions). Save the current state, reload it anytime.", "Réinitialiser le HUD": "Reset HUD"};
 let LANG = 'fr', LOC = 'fr-FR';
 const tr = s => {
   if (LANG === 'fr' || typeof s !== 'string') return s;
@@ -83,7 +83,7 @@ function applyColors() {
 
 const $ = id => document.getElementById(id);
 const layer = $('layer'), statsEl = $('stats'), panel = $('panel'), pbody = $('pbody');
-let D = null, edit = false, sel = 'vehicle', u = 1, sp = {}, tab = 'general', ctgt = 'accent';
+let D = null, edit = false, sel = 'vehicle', u = 1, sp = {}, tab = 'general';
 let lastCash = null, cashDelta = 0, cashT = 0, firstSlow = null;
 
 const fit = () => { u = innerHeight / 1080; layer.style.width = (innerWidth / u) + 'px'; layer.style.transform = `scale(${u})`; };
@@ -314,7 +314,7 @@ layer.addEventListener('pointerdown', e => {
   const t = e.target.closest('[data-el],[data-stat]'); if (!t) return;
   e.preventDefault();
   const isStat = !!t.dataset.stat, k = isStat ? t.dataset.stat : t.dataset.el;
-  sel = k; if (tab === 'colors') ctgt = k; renderPanel();
+  sel = k; tab = 'els'; renderPanel();
   const start = isStat ? { ...(sp[k] || { x: 0, y: 0 }) } : { ...(cfg.pos[k] || { x: 0, y: 0 }) };
   const sx = e.clientX, sy = e.clientY; t.classList.add('drag');
   const move = ev => {
@@ -329,41 +329,41 @@ layer.addEventListener('pointerdown', e => {
 
 const seg = (key, label, opts, cur) => `<div class="grp"><span>${label}</span><div class="seg">${opts.map(([v, l]) => `<button data-seg="${key}" data-v="${v}" class="${cur === v ? 'on' : ''}">${l}</button>`).join('')}</div></div>`;
 function renderPanel() { renderPanelRaw(); if (LANG !== 'fr') translateDom(pbody); }
+// Trois onglets : Style (réglages globaux), Éléments (choisir un élément puis taille / couleur / visibilité), Profils
 function renderPanelRaw() {
   const layout = cfg.layout || (cfg.style === 'bars' ? 'column' : 'row');
-  const selLabel = (VISL.find(([k]) => k === sel) || [0, ''])[1], pct = Math.round((cfg.scale[sel] || 1) * 100);
-  const tabs = `<div class="tabs">${[['general','Général'],['colors','Couleurs'],['els','Éléments']].map(([k, l]) => `<button data-tab="${k}" class="${tab === k ? 'on' : ''}">${l}</button>`).join('')}</div>`;
-  if (tab === 'colors') {
-    const cur = colorOf(ctgt), cl = (CT.find(([k]) => k === ctgt) || [0, ''])[1];
+  const tabs = `<div class="tabs">${[['general','Style'],['els','Éléments'],['prof','Profils']].map(([k, l]) => `<button data-tab="${k}" class="${tab === k ? 'on' : ''}">${l}</button>`).join('')}</div>`;
+  if (tab === 'els') {
+    const cur = colorOf(sel), selLabel = (VISL.find(([k]) => k === sel) || [0, ''])[1], pct = Math.round((cfg.scale[sel] || 1) * 100);
+    const sizable = ELS.includes(sel) || SK.includes(sel), isStat = DEFS.some(([k]) => k === sel);
+    const chips = VISL.map(([k, l]) => `<div class="chip ${sel === k ? 'on' : ''} ${cfg.hide[k] ? 'off' : ''}" data-pick="${k}"><i style="background:${colorOf(k)}"></i><span>${l}</span><button data-eye="${k}" title="${cfg.hide[k] ? 'Afficher' : 'Masquer'}">${cfg.hide[k] ? EYE_OFF : EYE}</button></div>`).join('');
     pbody.innerHTML = tabs +
-      `<div class="grp"><span>Thèmes</span><div class="presets">${PRESETS.map(([c, n]) => `<button class="preset" data-preset="${c}" title="${n}" style="--p:${c}"></button>`).join('')}</div></div>` +
-      `<div class="grp"><span>Élément · clique aussi directement sur le HUD</span><div class="clist">${CT.map(([k, l]) => `<button class="crow ${ctgt === k ? 'on' : ''}" data-ct="${k}"><i class="sw" style="background:${colorOf(k)}"></i><span>${l}</span>${cfg.colors[k] ? '<em></em>' : ''}</button>`).join('')}</div></div>` +
-      `<div class="grp"><span>Couleur · ${cl}</span><div class="pal">${PAL.map(c => `<button class="sw lg ${cur.toLowerCase() === c ? 'on' : ''}" data-col="${c}" style="background:${c}" title="${c}"></button>`).join('')}<label class="sw lg pick" title="Couleur libre"><input type="color" id="cpick" value="${cur}"></label></div>
-        <div class="row" style="gap:8px"><span class="hexv">${cur.toUpperCase()}</span><span style="flex:1"></span><button class="ghost" id="cReset">Par défaut</button></div>
-        <div class="row" style="gap:6px"><button class="ghost" id="cAllStats">Appliquer aux statuts</button><button class="ghost" id="cResetAll">Tout réinitialiser</button></div></div>` +
-      `<span style="font-size:11px;color:var(--dim)">Les alertes (vie basse, carburant…) restent en rouge.</span>`;
+      `<div class="chips">${chips}</div>` +
+      `<div class="insp"><div class="insp-h"><b>${selLabel}</b><button class="ghost" id="cReset">Par défaut</button></div>` +
+      (sizable ? `<div class="grp"><span>Taille</span><div class="row"><input id="scale" type="range" min="50" max="200" step="5" value="${pct}" style="flex:1;min-width:0"><span id="scaleV" class="pctv">${pct} %</span></div></div>` : '') +
+      `<div class="grp"><span>Couleur</span><div class="pal">${PAL.map(c => `<button class="sw lg ${cur.toLowerCase() === c ? 'on' : ''}" data-col="${c}" style="background:${c}" title="${c}"></button>`).join('')}<label class="sw lg pick" title="Couleur libre"><input type="color" id="cpick" value="${cur}"></label></div></div>` +
+      `<div class="row" style="gap:6px;flex-wrap:wrap">${sizable ? '<button class="ghost" id="scaleAll">Appliquer à tout</button>' : ''}${isStat ? '<button class="ghost" id="cAllStats">Appliquer aux statuts</button>' : ''}</div></div>` +
+      `<span class="hint">Glisse les éléments sur l’écran ; clique-en un pour le régler ici.</span>`;
     return;
   }
-  if (tab === 'els') {
+  if (tab === 'prof') {
     pbody.innerHTML = tabs +
-      `<div class="grp"><span>Taille · ${selLabel}</span>
-      <div class="row"><input id="scale" type="range" min="50" max="200" step="5" value="${pct}" style="flex:1;min-width:0"><span id="scaleV" style="width:40px;text-align:right">${pct} %</span></div>
-      <div class="row" style="gap:6px"><button class="ghost" id="scaleAll">Appliquer à tout</button><button class="ghost" id="scaleReset">Tailles par défaut</button></div>
-      <span>Clique un élément du HUD pour le sélectionner.</span></div>` +
-      `<div class="grp"><span>Éléments affichés</span><div class="vis">${VISL.map(([k, l]) => `<label class="ck"><input type="checkbox" data-vis="${k}" ${cfg.hide[k] ? '' : 'checked'}><span>${l}</span></label>`).join('')}</div></div>`;
+      `<div class="profs">${PROF.map((n, i) => `<div class="pcard"><b>${n}</b><div class="row" style="gap:6px"><button class="sec" data-pload="${i}" ${hasProf(i) ? '' : 'disabled'}>Charger</button><button class="ghost" data-psave="${i}">Enregistrer</button></div></div>`).join('')}</div>` +
+      `<span class="hint">Un profil garde tous tes réglages (style, couleurs, positions). Enregistre l’état actuel, recharge-le quand tu veux.</span>` +
+      `<button class="ghost danger" id="resetAll">Réinitialiser le HUD</button>`;
     return;
   }
   pbody.innerHTML = tabs +
-    `<div class="grp"><span>Profils</span><div class="prof">${PROF.map((n, i) => `<div><button class="sec" data-pload="${i}" ${hasProf(i) ? '' : 'disabled'}>${n}</button><button class="ghost" data-psave="${i}">Enregistrer</button></div>`).join('')}</div></div>` +
-    seg('mapMode', 'Minimap', [['always','Toujours'],['vehicle','En véhicule seulement']], cfg.mapMode) +
+    `<div class="grp"><span>Thème</span><div class="presets">${PRESETS.map(([c, n]) => `<button class="preset" data-preset="${c}" title="${n}" style="--p:${c}"></button>`).join('')}</div></div>` +
     seg('style', 'Style des statuts', [['rings','Anneaux'],['bars','Barres'],['minimal','Minimal']], cfg.style) +
     seg('layout', 'Disposition des statuts', [['row','En ligne'],['column','Empilés']], layout) +
-    seg('unit', 'Vitesse', [['kmh','km/h'],['mph','mph']], cfg.unit) +
-    seg('money', 'Argent et banque', [['auto','Discret au repos'],['always','Toujours visible']], cfg.money) +
-    `<span style="font-size:11px;color:var(--dim);margin-top:-6px">Discret : l’argent s’estompe et revient en plein quand il change.</span>` +
-    [['night','Atténuer le HUD la nuit (heure du jeu)'],['frame','Cadre autour de la minimap'],['smart','Afficher les statuts seulement si utile'],['mono','Icônes monochromes'],['streamer','Mode streamer (masque ID, argent, emploi)']]
-      .map(([k, l]) => `<label class="tg"><span>${l}</span><input type="checkbox" data-tog="${k}" ${cfg[k] ? 'checked' : ''}></label>`).join('');
+    `<div class="two">` + seg('unit', 'Vitesse', [['kmh','km/h'],['mph','mph']], cfg.unit) + seg('mapMode', 'Minimap', [['always','Toujours'],['vehicle','En véhicule']], cfg.mapMode) + `</div>` +
+    seg('money', 'Argent et banque', [['auto','Discret'],['always','Toujours visible']], cfg.money) +
+    `<div class="sws">` + [['night','Atténuer le HUD la nuit (heure du jeu)'],['frame','Cadre autour de la minimap'],['smart','Afficher les statuts seulement si utile'],['mono','Icônes monochromes'],['streamer','Mode streamer (masque ID, argent, emploi)']]
+      .map(([k, l]) => `<label class="tg"><span>${l}</span><input type="checkbox" class="switch" data-tog="${k}" ${cfg[k] ? 'checked' : ''}></label>`).join('') + `</div>`;
 }
+const EYE = '<svg viewBox="0 0 24 24"><path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>';
+const EYE_OFF = '<svg viewBox="0 0 24 24"><path d="M3 3l18 18M10.6 6.1A9.6 9.6 0 0 1 12 6c6 0 10 6 10 6a17 17 0 0 1-3.2 3.7M6.5 7.6A16 16 0 0 0 2 12s4 7 10 7a9.5 9.5 0 0 0 4.2-1"/></svg>';
 const PROF = ['Course', 'RP calme', 'Streamer'];
 const PRESETS = [['#9184d9','Violet'],['#4fb8d6','Cyan'],['#d6b25e','Or'],['#d65a6a','Rouge'],['#5fc48a','Vert'],['#d68ab3','Rose'],['#e9e9ed','Blanc']];
 const profKey = i => KEY + '_prof' + i;
@@ -381,17 +381,19 @@ function notify(n) {
 }
 const setColor = (k, c) => { if (c) cfg.colors[k] = c; else delete cfg.colors[k]; applyColors(); render(); };
 pbody.addEventListener('click', e => {
-  const tb = e.target.closest('[data-tab]'); if (tb) { tab = tb.dataset.tab; if (tab === 'colors' && CT.some(([k]) => k === sel)) ctgt = sel; renderPanel(); return; }
-  const cr = e.target.closest('[data-ct]'); if (cr) { ctgt = cr.dataset.ct; if (ELS.includes(ctgt) || SK.includes(ctgt)) sel = ctgt; renderPanel(); render(); return; }
-  const pr = e.target.closest('[data-preset]'); if (pr) { cfg.colors = { accent: pr.dataset.preset, map: pr.dataset.preset, vehicle: pr.dataset.preset, voice: pr.dataset.preset }; applyColors(); render(); save(); renderPanel(); return; }
+  const tb = e.target.closest('[data-tab]'); if (tb) { tab = tb.dataset.tab; renderPanel(); return; }
+  const ey = e.target.closest('[data-eye]');
+  if (ey) { const k = ey.dataset.eye; if (cfg.hide[k]) delete cfg.hide[k]; else cfg.hide[k] = true; save(); renderPanel(); render(); return; }
+  const pk = e.target.closest('[data-pick]'); if (pk) { sel = pk.dataset.pick; renderPanel(); render(); return; }
+  const pr = e.target.closest('[data-preset]'); if (pr) { cfg.colors = { ...cfg.colors, accent: pr.dataset.preset, map: pr.dataset.preset, vehicle: pr.dataset.preset, voice: pr.dataset.preset }; applyColors(); render(); save(); renderPanel(); return; }
   const pl = e.target.closest('[data-pload]');
   if (pl) { try { localStorage.setItem(KEY, localStorage.getItem(profKey(pl.dataset.pload))); } catch (er) {} cfg = load(); buildStats(); applyColors(); save(); renderPanel(); render(); return; }
   const ps = e.target.closest('[data-psave]');
   if (ps) { try { localStorage.setItem(profKey(ps.dataset.psave), JSON.stringify(cfg)); } catch (er) {} post('prof', { i: +ps.dataset.psave, cfg }); notify({ title: tr('Profil enregistré'), text: tr(PROF[ps.dataset.psave]), type: 'success', duration: 2000 }); renderPanel(); return; }
-  const cb = e.target.closest('[data-col]'); if (cb) { setColor(ctgt, cb.dataset.col); save(); renderPanel(); return; }
-  if (e.target.id === 'cReset') { setColor(ctgt, null); save(); renderPanel(); return; }
-  if (e.target.id === 'cResetAll') { cfg.colors = {}; applyColors(); render(); save(); renderPanel(); return; }
-  if (e.target.id === 'cAllStats') { const c = colorOf(ctgt); DEFS.forEach(([k]) => cfg.colors[k] = c); render(); save(); renderPanel(); return; }
+  const cb = e.target.closest('[data-col]'); if (cb) { setColor(sel, cb.dataset.col); save(); renderPanel(); return; }
+  if (e.target.id === 'cReset') { setColor(sel, null); delete cfg.scale[sel]; save(); renderPanel(); render(); return; }
+  if (e.target.id === 'resetAll') { cfg = JSON.parse(JSON.stringify(DEF)); buildStats(); applyColors(); save(); renderPanel(); render(); return; }
+  if (e.target.id === 'cAllStats') { const c = colorOf(sel); DEFS.forEach(([k]) => cfg.colors[k] = c); render(); save(); renderPanel(); return; }
   const b = e.target.closest('[data-seg]');
   if (b) {
     const k = b.dataset.seg, v = b.dataset.v;
@@ -400,17 +402,15 @@ pbody.addEventListener('click', e => {
     save(); renderPanel(); render(); return;
   }
   if (e.target.id === 'scaleAll') { const v = cfg.scale[sel] || 1; [...ELS, ...SK].forEach(k => cfg.scale[k] = v); cfg.spos = {}; save(); renderPanel(); render(); }
-  if (e.target.id === 'scaleReset') { cfg.scale = {}; cfg.spos = {}; save(); renderPanel(); render(); }
 });
 pbody.addEventListener('input', e => {
   if (e.target.id === 'scale') { cfg.scale[sel] = +e.target.value / 100; $('scaleV').textContent = e.target.value + ' %'; render(); }
-  if (e.target.id === 'cpick') { setColor(ctgt, e.target.value); const h = pbody.querySelector('.hexv'); if (h) h.textContent = e.target.value.toUpperCase(); }
+  if (e.target.id === 'cpick') { setColor(sel, e.target.value); const h = pbody.querySelector('.hexv'); if (h) h.textContent = e.target.value.toUpperCase(); }
 });
 pbody.addEventListener('change', e => {
   const t = e.target;
   if (t.id === 'scale') save();
   if (t.id === 'cpick') { save(); renderPanel(); }
-  if (t.dataset.vis) { if (t.checked) delete cfg.hide[t.dataset.vis]; else cfg.hide[t.dataset.vis] = true; save(); render(); }
   if (t.dataset.tog) { cfg[t.dataset.tog] = t.checked; save(); render(); }
 });
 $('flip').onclick = () => panel.classList.toggle('right');

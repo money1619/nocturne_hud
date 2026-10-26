@@ -98,7 +98,7 @@ See `config.lua` for all options: seatbelt, voice circle, notifications, fuel, o
 
 | Command | Description |
 |---------|-------------|
-| `/hudsetting` | Open HUD customization menu (move, resize, show/hide elements) |
+| `/hudsetting` | HUD menu in 3 tabs: Style (theme, layout, switches), Elements (pick an element: show/hide, size, color), Profiles |
 | `/ancre` | Drop / lift boat anchor |
 | `Esc` | Close settings menu |
 
