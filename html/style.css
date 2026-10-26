@@ -132,7 +132,7 @@ button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 .ring .rg circle{stroke-width:3.2}
 .ring .rg .pv{filter:drop-shadow(0 0 3px var(--c))}
 .track{height:6px;border-radius:3px;background:rgba(13,14,22,.6);box-shadow:0 0 0 1px var(--line)}
-.fill{border-radius:3px;background:linear-gradient(90deg,var(--c),color-mix(in srgb,var(--c) 60%,#fff))}
+.fill{border-radius:3px;background:var(--c);box-shadow:inset 0 -3px 4px rgba(255,255,255,.18)}
 .min{padding:3px 8px;border-radius:999px;background:var(--glass)}
 .vcirc{background:radial-gradient(circle,rgba(13,14,22,.78) 58%,transparent 60%)!important}
 /* compteur */
@@ -183,7 +183,7 @@ body.cinema #notifs{display:none}
 .prof .sec:disabled{opacity:.45;cursor:default}
 .prof .ghost{font-size:10.5px;min-height:22px;color:var(--dim)}
 .presets{display:flex;gap:8px;flex-wrap:wrap}
-.preset{width:34px;height:22px;border-radius:999px;border:0;cursor:pointer;background:linear-gradient(135deg,var(--p),color-mix(in srgb,var(--p) 55%,#fff));box-shadow:0 0 0 1px rgba(0,0,0,.4)}
+.preset{width:34px;height:22px;border-radius:999px;border:0;cursor:pointer;background:var(--p);box-shadow:inset 0 -6px 8px rgba(255,255,255,.22),0 0 0 1px rgba(0,0,0,.4)}
 .preset:hover{transform:scale(1.08)}
 
 /* ---------- v1.9 : panneau de réglages simplifié (Style / Éléments / Profils) */
