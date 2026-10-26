@@ -332,7 +332,7 @@ function renderPanel() { renderPanelRaw(); if (LANG !== 'fr') translateDom(pbody
 // Trois onglets : Style (réglages globaux), Éléments (choisir un élément puis taille / couleur / visibilité), Profils
 function renderPanelRaw() {
   const layout = cfg.layout || (cfg.style === 'bars' ? 'column' : 'row');
-  const tabs = `<div class="tabs">${[['general','Style'],['els','Éléments'],['prof','Profils']].map(([k, l]) => `<button data-tab="${k}" class="${tab === k ? 'on' : ''}">${l}</button>`).join('')}</div>`;
+  const tabs = `<div class="tabs">${[['general','Style'],['els','Éléments'],['prof','Profils']].map(([k, l]) => `<button data-tab="${k}" class="${tab === k ? 'on' : ''}"><svg viewBox="0 0 24 24"><path d="${TABIC[k]}"/></svg>${l}</button>`).join('')}</div>`;
   if (tab === 'els') {
     const cur = colorOf(sel), selLabel = (VISL.find(([k]) => k === sel) || [0, ''])[1], pct = Math.round((cfg.scale[sel] || 1) * 100);
     const sizable = ELS.includes(sel) || SK.includes(sel), isStat = DEFS.some(([k]) => k === sel);
@@ -362,6 +362,7 @@ function renderPanelRaw() {
     `<div class="sws">` + [['night','Atténuer le HUD la nuit (heure du jeu)'],['frame','Cadre autour de la minimap'],['smart','Afficher les statuts seulement si utile'],['mono','Icônes monochromes'],['streamer','Mode streamer (masque ID, argent, emploi)']]
       .map(([k, l]) => `<label class="tg"><span>${l}</span><input type="checkbox" class="switch" data-tog="${k}" ${cfg[k] ? 'checked' : ''}></label>`).join('') + `</div>`;
 }
+const TABIC = { general: 'M12 3a9 9 0 1 0 0 18c1.3 0 2-.8 2-1.8 0-1.2-1-1.4-1-2.6 0-1 .8-1.6 2-1.6h2.2A3.8 3.8 0 0 0 21 9.2C21 5.7 16.9 3 12 3zM7.5 11h.01M10 7.5h.01M14.5 7.5h.01', els: 'M4 4h7v7H4zM13 4h7v7h-7zM4 13h7v7H4zM13 13h7v7h-7z', prof: 'M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM4 21c0-4 3.6-6 8-6s8 2 8 6' };
 const EYE = '<svg viewBox="0 0 24 24"><path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>';
 const EYE_OFF = '<svg viewBox="0 0 24 24"><path d="M3 3l18 18M10.6 6.1A9.6 9.6 0 0 1 12 6c6 0 10 6 10 6a17 17 0 0 1-3.2 3.7M6.5 7.6A16 16 0 0 0 2 12s4 7 10 7a9.5 9.5 0 0 0 4.2-1"/></svg>';
 const PROF = ['Course', 'RP calme', 'Streamer'];
