@@ -593,6 +593,53 @@ CreateThread(function()
   end
 end)
 
+-- Après le choix du personnage / un respawn, une autre ressource (multicharacter, apparence…) a pu laisser la minimap cachée :
+-- le HUD ne rappelle DisplayRadar que quand son état change, on force donc une réapplication
+local function reapplyRadar()
+  Wait(1500)
+  lastRadar = nil
+end
+AddEventHandler('esx:playerLoaded', reapplyRadar)
+AddEventHandler('playerSpawned', reapplyRadar)
+
+-- /radardebug test : force le radar puis relève son état à 0, 1 et 30 images (pour savoir si quelque chose le recoupe aussitôt)
+RegisterCommand('radardebug', function(_, args)
+  if args[1] == 'test' then
+    CreateThread(function()
+      DisplayRadar(true)
+      local r = { tostring(IsRadarEnabled()) }
+      Wait(0); r[#r + 1] = tostring(IsRadarEnabled())
+      for _ = 1, 30 do Wait(0) end
+      r[#r + 1] = tostring(IsRadarEnabled())
+      print(('[nocturne_hud] test radar : enabled juste après=%s, +1 image=%s, +30 images=%s | scaleform minimap chargé=%s'):format(
+        r[1], r[2], r[3], tostring(HasScaleformMovieLoaded(RequestScaleformMovie('minimap')))))
+    end)
+    return
+  end
+  print(('[nocturne_hud] radarWanted=%s lastRadar=%s replaced=%s cinema=%s externalHidden=%s hideMap=%s mapVeh=%s | IsRadarHidden=%s IsRadarEnabled=%s'):format(
+    tostring(radarWanted), tostring(lastRadar), tostring(minimapReplaced), tostring(cinema), tostring(externalHidden),
+    tostring(hideMap), tostring(mapVeh), tostring(IsRadarHidden()), tostring(IsRadarEnabled())))
+end, false)
+
+-- Filet de sécurité : le HUD affiche son cadre mais le radar natif reste caché (une autre ressource l'a coupé sans le rendre).
+-- Si le HUD le veut visible depuis plus de 5 s et qu'il est caché, on le rend (affiché une fois dans F8).
+CreateThread(function()
+  local since, warned = nil, false
+  while true do
+    Wait(1000)
+    if lastRadar == true and IsRadarHidden() and not IsPauseMenuActive() and not IsScreenFadedOut() then
+      since = since or GetGameTimer()
+      if GetGameTimer() - since > 5000 then
+        if not warned then print('[nocturne_hud] minimap cachée par une autre ressource : réaffichée'); warned = true end
+        DisplayRadar(true)
+        since = nil
+      end
+    else
+      since = nil
+    end
+  end
+end)
+
 ---------------------------------------------------------------- données lentes (1 x / s, envoyées seulement si changées)
 local lastSlow = ''
 CreateThread(function()
