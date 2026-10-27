@@ -132,13 +132,15 @@ Example: `exports.nocturne_hud:SetNeeds(80, 65, nil)`
 
 ## 🖼 Screenshots / Captures d'écran
 
-Add in-game screenshots here to show the HUD layout:
+![Overview](docs/screenshots/overview.png)
 
-- Player status panel
-- Speedometer and vehicle info
-- Customization menu (`/hudsetting`)
+| Speedometer | Status & voice |
+|---|---|
+| ![Speedometer](docs/screenshots/speedometer.png) | ![Status](docs/screenshots/status.png) |
 
-> **Note:** Add screenshots to `docs/screenshots/` or link them from the GitHub Pages site. Players need to see what the HUD looks like before installing.
+| `/hudsetting` menu | Money, job & notifications |
+|---|---|
+| ![Settings](docs/screenshots/settings.png) | ![Money and notifications](docs/screenshots/money_notify.png) |
 
 ---
 
