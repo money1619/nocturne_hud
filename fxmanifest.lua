@@ -5,7 +5,7 @@ lua54 'yes'
 
 name 'nocturne_hud'
 description 'Nocturne HUD — Custom FiveM HUD for GTA V Roleplay. Supports QBCore, ESX and Standalone. Player status, money, job, voice, speedometer, seatbelt, vehicle info. Lua, no dependency.'
-version '1.10.1'
+version '1.10.2'
 
 shared_script 'config.lua'
 client_script 'client/main.lua'
