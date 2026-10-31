@@ -1,4 +1,4 @@
-/* Polices incluses dans la ressource (sous-ensemble latin, polices variables) : plus de dépendance à Google Fonts
+/* Polices incluses dans la ressource (sous-ensemble latin, polices variables) : aucune police chargée depuis Internet
    en jeu. Inter et Sora sont sous licence SIL Open Font License 1.1 (OFL-Inter.txt, OFL-Sora.txt). */
 @font-face { font-family: 'Inter'; font-style: normal; font-weight: 400 700; font-display: swap; src: url(inter-latin.woff2) format('woff2'); }
 @font-face { font-family: 'Sora'; font-style: normal; font-weight: 500 700; font-display: swap; src: url(sora-latin.woff2) format('woff2'); }

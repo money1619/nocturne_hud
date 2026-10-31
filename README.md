@@ -41,7 +41,7 @@
 - Minimap native control: hide bars, scale, offset
 - No SQL tables, no inventory objects, player settings in KVP, odometer in a JSON file
 - Lightweight: sends only changed data to the NUI page (at least once per second)
-- Fonts Inter and Sora included locally (no Google Fonts dependency)
+- Fonts Inter and Sora included locally (no external font dependency)
 - Multilingual: French (`fr`) and English (`en`)
 
 > **Français:** Statuts joueur (vie, armure, faim, soif, stress), argent liquide et banque, emploi, indicateurs de voix (pma-voice), compteur de vitesse, ceinture, clignotants, warnings, régulateur, limiteur, HUD personnalisable (position, taille, affichage/masque, mode streamer), réglages sauvegardés en KVP, éjection par pare-brise sans ceinture, mode cinéma F10, carburant avec autonomie estimée, compteur kilométrique intégré (par plaque, sans autre ressource), notifications style HUD, minimap native configurable, pas de base de données, polices incluses localement, multilingue fr/en.
